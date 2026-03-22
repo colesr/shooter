@@ -210,6 +210,7 @@
 
     /* ── Shooting star trail ── */
     #star-alert{
+      display:none; /* Hidden - no notification shown */
       position:absolute;top:30%;left:50%;transform:translateX(-50%);
       font-family:'Orbitron',monospace;font-size:24px;font-weight:900;
       color:#ffe600;text-shadow:0 0 30px #ffe600, 0 0 60px rgba(255,230,0,0.8);
@@ -1800,6 +1801,14 @@ document.addEventListener('DOMContentLoaded', function() {
   wrap.addEventListener('mouseenter',()=>mInside=true);
   wrap.addEventListener('mouseleave',()=>mInside=false);
 
+  // Keyboard test: Press 'S' to spawn a shooting star
+  window.addEventListener('keydown', e => {
+    if(e.key === 's' || e.key === 'S') {
+      console.log('🎮 Manual star spawn triggered by pressing S!');
+      spawnShootingStar();
+    }
+  });
+
   // Rapid fire for overclock
   let fireHeld=false,fireTimer=0;
   wrap.addEventListener('mousedown',e=>{if(e.button!==0)return;fireHeld=true;doFire();});
@@ -1921,18 +1930,20 @@ document.addEventListener('DOMContentLoaded', function() {
   // ── DRONE SWARM — 3 synchronized drones ──
   class DroneSwarm {
     constructor(maxHp){
-      this.maxHp = maxHp;
-      this.hp = maxHp;
+      // Calculate actual total HP from 3 drones with reduced HP
+      const droneHp = Math.ceil(maxHp/4);
+      this.maxHp = droneHp * 3; // Total HP = sum of all drones
+      this.hp = this.maxHp;
       this.dead = false;
       this.hitFlash = 0;
       this.tick = 0;
       this.type = 'drone_swarm';
       
-      // Create 3 drones in triangular formation
+      // Create 3 drones in triangular formation - each drone is easier to kill
       this.drones = [
-        { x: W*0.75, y: H*0.25, vx:0, vy:0, alive:true, hp:Math.ceil(maxHp/3) },
-        { x: W*0.85, y: H*0.35, vx:0, vy:0, alive:true, hp:Math.ceil(maxHp/3) },
-        { x: W*0.75, y: H*0.45, vx:0, vy:0, alive:true, hp:Math.ceil(maxHp/3) }
+        { x: W*0.75, y: H*0.25, vx:0, vy:0, alive:true, hp:droneHp },
+        { x: W*0.85, y: H*0.35, vx:0, vy:0, alive:true, hp:droneHp },
+        { x: W*0.75, y: H*0.45, vx:0, vy:0, alive:true, hp:droneHp }
       ];
       this.shootTimer = 0;
       this.projectiles = [];
@@ -1943,6 +1954,13 @@ document.addEventListener('DOMContentLoaded', function() {
       this.tick += dt;
       this.hitFlash = Math.max(0, this.hitFlash - dt);
       
+      // Safety check: if all drones are dead, boss should die
+      const anyAlive = this.drones.some(d => d.alive);
+      if(!anyAlive && !this.dead){
+        this._die();
+        return;
+      }
+      
       // Move drones in synchronized wave pattern
       this.drones.forEach((d,i)=>{
         if(!d.alive) return;
@@ -1952,11 +1970,15 @@ document.addEventListener('DOMContentLoaded', function() {
         d.vx = (targetX - d.x) * 0.02;
         d.x += d.vx * dt;
         d.y += d.vy * dt;
+        
+        // Keep drones on screen - clamp to bounds
+        d.x = Math.max(50, Math.min(W - 50, d.x));
+        d.y = Math.max(50, Math.min(H - 50, d.y));
       });
       
-      // Shoot projectiles
+      // Shoot projectiles less frequently
       this.shootTimer += dt;
-      if(this.shootTimer >= 90){
+      if(this.shootTimer >= 120){ // Increased from 90 to 120 frames = 33% slower fire rate
         this.shootTimer = 0;
         this.drones.forEach(d=>{
           if(d.alive){
@@ -2743,7 +2765,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   function spawnMiniBoss(){
     bossActive = true;
-    const hp = 30 + Math.floor(score/50)*10;
+    const hp = 20 + Math.floor(score/60)*8; // Reduced from 30 + score/50*10 to 20 + score/60*8
     
     // Choose random mini boss type
     const types = ['drone_swarm', 'barrier_tank'];
@@ -3217,49 +3239,69 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Shooting stars
   let shootingStars = [];
-  let nextShootingStarIn = rand(60*60, 90*60); // 60-90s at 60fps
+  let nextShootingStarIn = rand(5*60, 10*60); // FIRST STAR: 5-10 seconds (MUCH faster for testing!)
   let shootingStarTimer = 0;
   const STAR_ALERT = document.getElementById('star-alert');
 
   function spawnShootingStar(){
     const side = Math.random()<0.5?-1:1;
+    const startX = side<0 ? 0.15 : 0.85; // Start more inside screen (was 0.05/0.95)
+    const startY = 0.35 + Math.random()*0.1; // Middle of screen (35-45%)
     shootingStars.push({
-      x: side<0 ? -0.05 : 1.05,
-      y: 0.3 + Math.random()*0.2, // Start lower in the sky (30-50% down screen)
-      vx: side * (0.0024 + Math.random()*0.0024), // Horizontal speed
-      vy: -0.0015 - Math.random()*0.0010, // Initial upward velocity (negative = up): -0.0015 to -0.0025
-      gravity: 0.00002, // Gentle gravity to create arc
+      x: startX,
+      y: startY,
+      vx: side * (0.0008 + Math.random()*0.0008), // MUCH slower: 0.0008-0.0016 (was 0.0018-0.0036)
+      vy: -0.0003 - Math.random()*0.0002, // MUCH gentler arc: -0.0003 to -0.0005 (was -0.0008 to -0.0014)
+      gravity: 0.000008, // Less gravity (was 0.000015)
       trail: [],
       alive: true,
       hit: false,
       twinkle: 0,
-      // Screen coords cached each frame for hit detection
       sx:0, sy:0,
     });
-    // Show alert
-    STAR_ALERT.classList.remove('show');
-    void STAR_ALERT.offsetWidth;
-    STAR_ALERT.classList.add('show');
+    // Star alert removed - no notification
+    console.log('⭐⭐⭐ SHOOTING STAR SPAWNED! ⭐⭐⭐', 'Side:', side<0 ? 'LEFT' : 'RIGHT', 'Start pos:', {x: startX, y: startY}, 'Velocity:', {vx: side * (0.0008 + Math.random()*0.0008), vy: -0.0003 - Math.random()*0.0002});
   }
 
   function tickShootingStars(dt){
     shootingStarTimer += dt;
     if(shootingStarTimer >= nextShootingStarIn){
+      console.log('⏰ Shooting star timer reached!', shootingStarTimer, '>=', nextShootingStarIn);
       shootingStarTimer = 0;
-      nextShootingStarIn = rand(45*60, 60*60); // More frequent: 45-60 seconds
+      nextShootingStarIn = rand(20*60, 30*60);
       spawnShootingStar();
+    }
+
+    if(Math.floor(shootingStarTimer / 300) !== Math.floor((shootingStarTimer - dt) / 300)) {
+      console.log('⭐ Star timer:', Math.floor(shootingStarTimer/60) + 's', '/', Math.floor(nextShootingStarIn/60) + 's', '| Active stars:', shootingStars.length);
     }
 
     for(let i=shootingStars.length-1;i>=0;i--){
       const s=shootingStars[i];
       s.trail.push({x:s.x,y:s.y});
-      if(s.trail.length>50)s.trail.shift(); // Longer trail: 50 points instead of 22
+      if(s.trail.length>50)s.trail.shift();
+      
+      const oldX = s.x, oldY = s.y;
       s.x+=s.vx*dt;
-      s.vy+=s.gravity*dt; // Apply gravity to vertical velocity
+      s.vy+=s.gravity*dt;
       s.y+=s.vy*dt;
       s.sx=s.x*W; s.sy=s.y*H;
-      // Remove if off screen (x or y out of bounds)
-      if(s.x<-0.15||s.x>1.15||s.y<-0.1||s.y>0.9||s.hit)shootingStars.splice(i,1);
+      
+      // Log position every 60 frames
+      if(tick % 60 === 0 && shootingStars.length > 0) {
+        console.log('⭐ Star position:', {x: s.x.toFixed(3), y: s.y.toFixed(3)}, 'Screen:', {sx: s.sx.toFixed(0), sy: s.sy.toFixed(0)}, 'Movement:', {dx: (s.x-oldX).toFixed(5), dy: (s.y-oldY).toFixed(5)});
+      }
+      
+      // Remove if off screen - WIDER BOUNDS
+      if(s.x<-0.3||s.x>1.3||s.y<-0.2||s.y>1.0||s.hit){
+        console.log('⭐ Star removed', 'Reason:', s.hit ? 'HIT' : 'OFF SCREEN', 'Final pos:', {x: s.x.toFixed(3), y: s.y.toFixed(3)}, 'Bounds check:', {
+          tooLeft: s.x<-0.3,
+          tooRight: s.x>1.3,
+          tooHigh: s.y<-0.2,
+          tooLow: s.y>1.0
+        });
+        shootingStars.splice(i,1);
+      }
     }
   }
 
