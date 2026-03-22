@@ -189,15 +189,24 @@
     /* ── Shooting star trail ── */
     #star-alert{
       position:absolute;top:30%;left:50%;transform:translateX(-50%);
-      font-family:'Orbitron',monospace;font-size:13px;font-weight:700;
-      color:#ffe600;text-shadow:0 0 16px #ffe600;
-      letter-spacing:0.15em;pointer-events:none;opacity:0;z-index:30;
+      font-family:'Orbitron',monospace;font-size:24px;font-weight:900;
+      color:#ffe600;text-shadow:0 0 30px #ffe600, 0 0 60px rgba(255,230,0,0.8);
+      letter-spacing:0.2em;pointer-events:none;opacity:0;z-index:30;
       white-space:nowrap;
+      background:rgba(0,0,0,0.7);
+      padding:12px 24px;
+      border:2px solid #ffe600;
+      border-radius:4px;
+      box-shadow:0 0 40px rgba(255,230,0,0.5);
     }
-    #star-alert.show{animation:starAlert 2s ease forwards;}
-    @keyframes starAlert{0%{opacity:0;transform:translateX(-50%) translateY(10px)}
-      20%{opacity:1;transform:translateX(-50%) translateY(0)}
-      75%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-8px)}}
+    #star-alert.show{animation:starAlert 2.5s ease forwards;}
+    @keyframes starAlert{
+      0%{opacity:0;transform:translateX(-50%) translateY(10px) scale(0.8)}
+      15%{opacity:1;transform:translateX(-50%) translateY(0) scale(1.1)}
+      20%{transform:translateX(-50%) translateY(0) scale(1)}
+      75%{opacity:1}
+      100%{opacity:0;transform:translateX(-50%) translateY(-8px) scale(0.95)}
+    }
 
     /* Wish active badges */
     #wish-active-bar{
@@ -209,6 +218,123 @@
       border:1px solid currentColor;animation:wishBadgePulse 1.5s ease-in-out infinite alternate;
     }
     @keyframes wishBadgePulse{from{opacity:0.8}to{opacity:1;box-shadow:0 0 12px currentColor;}}
+    
+    /* ── Achievement notification ── */
+    #achievement-notify{
+      position:absolute;top:80px;right:20px;z-index:60;
+      background:rgba(0,0,0,0.92);border:2px solid #ffe600;
+      padding:12px 18px;border-radius:3px;min-width:280px;
+      box-shadow:0 0 30px rgba(255,230,0,0.4);
+      transform:translateX(400px);opacity:0;transition:all 0.4s cubic-bezier(0.68,-0.55,0.265,1.55);
+    }
+    #achievement-notify.show{transform:translateX(0);opacity:1;}
+    .ach-header{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;
+      color:rgba(255,230,0,0.6);letter-spacing:0.2em;margin-bottom:5px;}
+    .ach-title{font-family:'Orbitron',monospace;font-size:14px;font-weight:900;
+      color:#ffe600;text-shadow:0 0 12px #ffe600;letter-spacing:0.08em;margin-bottom:4px;}
+    .ach-desc{font-size:10px;color:rgba(255,230,0,0.7);line-height:1.4;margin-bottom:6px;}
+    .ach-reward{font-family:'Orbitron',monospace;font-size:10px;color:#b24bff;
+      text-shadow:0 0 8px #b24bff;font-weight:700;}
+    
+    /* ── Daily challenge panel ── */
+    #daily-panel{
+      position:absolute;top:10px;right:10px;z-index:25;
+      background:rgba(0,0,0,0.82);border:1px solid rgba(255,230,0,0.3);
+      padding:10px 14px;min-width:260px;border-radius:2px;
+      box-shadow:0 0 20px rgba(255,230,0,0.15);
+    }
+    .daily-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+    .daily-title{font-family:'Orbitron',monospace;font-size:10px;font-weight:900;
+      color:#ffe600;text-shadow:0 0 10px rgba(255,230,0,0.6);letter-spacing:0.15em;}
+    .daily-time{font-size:8px;color:rgba(255,230,0,0.45);font-family:'Share Tech Mono',monospace;}
+    .daily-objective{font-size:10px;color:rgba(255,230,0,0.85);line-height:1.5;margin-bottom:6px;}
+    .daily-progress{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+    .daily-bar{flex:1;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;}
+    .daily-fill{height:100%;background:linear-gradient(90deg,#ffe600,#ffaa00);transition:width 0.3s;}
+    .daily-pct{font-family:'Orbitron',monospace;font-size:9px;color:rgba(255,230,0,0.7);}
+    .daily-reward{font-family:'Orbitron',monospace;font-size:9px;color:#b24bff;
+      text-shadow:0 0 8px rgba(178,75,255,0.6);font-weight:700;}
+    .daily-complete{color:rgba(0,255,157,0.9);text-shadow:0 0 10px rgba(0,255,157,0.7);
+      font-family:'Orbitron',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;}
+    
+    /* ── Enhanced death screen ── */
+    #death-screen{
+      position:absolute;inset:0;z-index:65;background:rgba(4,1,14,0.96);
+      display:none;align-items:center;justify-content:center;flex-direction:column;
+      backdrop-filter:blur(12px);animation:deathFadeIn 0.6s ease;
+    }
+    #death-screen.show{display:flex;}
+    @keyframes deathFadeIn{from{opacity:0}to{opacity:1}}
+    .death-title{font-family:'Orbitron',monospace;font-size:36px;font-weight:900;
+      color:#ff2d78;text-shadow:0 0 40px #ff2d78,0 0 80px rgba(255,45,120,0.4);
+      letter-spacing:0.2em;margin-bottom:8px;}
+    .death-subtitle{font-family:'Share Tech Mono',monospace;font-size:11px;
+      color:rgba(255,45,120,0.5);letter-spacing:0.18em;margin-bottom:30px;}
+    .death-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:480px;
+      margin-bottom:35px;}
+    .death-stat{text-align:center;padding:12px;background:rgba(255,255,255,0.02);
+      border:1px solid rgba(255,255,255,0.06);border-radius:2px;}
+    .death-stat-label{font-size:9px;color:rgba(255,255,255,0.35);letter-spacing:0.12em;
+      margin-bottom:5px;font-family:'Share Tech Mono',monospace;}
+    .death-stat-value{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;
+      color:#00ffcc;text-shadow:0 0 14px rgba(0,255,204,0.6);}
+    .death-stat-value.record{color:#ffe600;text-shadow:0 0 14px #ffe600;}
+    .death-stat-value.close{color:#ff6600;text-shadow:0 0 14px #ff6600;}
+    .death-near-miss{font-size:10px;color:#ff6600;margin-top:3px;font-family:'Orbitron',monospace;
+      text-shadow:0 0 10px rgba(255,102,0,0.6);}
+    .death-shards{font-family:'Orbitron',monospace;font-size:14px;color:#b24bff;
+      text-shadow:0 0 12px #b24bff;margin-bottom:25px;letter-spacing:0.1em;}
+    .death-buttons{display:flex;gap:15px;}
+    .death-btn{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;
+      padding:14px 40px;border-radius:3px;cursor:pointer;letter-spacing:0.18em;
+      transition:all 0.2s;border:2px solid;}
+    .death-btn-retry{background:#00ffcc;color:#04010a;border-color:#00ffcc;
+      box-shadow:0 0 25px rgba(0,255,204,0.4);}
+    .death-btn-retry:hover{background:#00ffe6;border-color:#00ffe6;transform:scale(1.05);
+      box-shadow:0 0 35px rgba(0,255,204,0.6);}
+    .death-btn-shop{background:transparent;color:#b24bff;border-color:#b24bff;}
+    .death-btn-shop:hover{background:rgba(178,75,255,0.15);border-color:#d666ff;transform:scale(1.05);}
+    
+    /* ── Name input modal ── */
+    #name-modal{
+      position:absolute;inset:0;z-index:70;background:rgba(4,1,14,0.96);
+      display:none;align-items:center;justify-content:center;flex-direction:column;
+      backdrop-filter:blur(12px);
+    }
+    #name-modal.show{display:flex;}
+    .name-welcome{font-family:'Orbitron',monospace;font-size:28px;font-weight:900;
+      color:#00ffcc;text-shadow:0 0 30px rgba(0,255,204,0.8);letter-spacing:0.2em;margin-bottom:12px;}
+    .name-subtitle{font-size:11px;color:rgba(0,255,204,0.5);letter-spacing:0.15em;
+      margin-bottom:30px;font-family:'Share Tech Mono',monospace;}
+    .name-input-container{display:flex;flex-direction:column;gap:12px;align-items:center;}
+    .name-label{font-family:'Orbitron',monospace;font-size:11px;color:rgba(0,255,204,0.7);
+      letter-spacing:0.12em;margin-bottom:5px;}
+    #name-input{
+      font-family:'Orbitron',monospace;font-size:18px;font-weight:700;
+      background:rgba(0,0,0,0.6);border:2px solid rgba(0,255,204,0.4);
+      color:#00ffcc;padding:12px 20px;text-align:center;letter-spacing:0.1em;
+      width:320px;border-radius:3px;outline:none;text-transform:uppercase;
+    }
+    #name-input:focus{border-color:#00ffcc;box-shadow:0 0 20px rgba(0,255,204,0.3);}
+    #name-submit{
+      font-family:'Orbitron',monospace;font-size:14px;font-weight:700;
+      background:#00ffcc;color:#04010a;border:none;padding:14px 50px;
+      border-radius:3px;cursor:pointer;letter-spacing:0.18em;margin-top:10px;
+      transition:all 0.2s;box-shadow:0 0 25px rgba(0,255,204,0.4);
+    }
+    #name-submit:hover{background:#00ffe6;transform:scale(1.05);box-shadow:0 0 35px rgba(0,255,204,0.6);}
+    #name-submit:disabled{opacity:0.5;cursor:not-allowed;}
+    
+    /* ── Name display and edit in HUD ── */
+    #player-name-display{
+      display:flex;align-items:center;gap:6px;cursor:pointer;padding:3px 10px;
+      border:1px solid rgba(0,255,204,0.2);border-radius:2px;transition:all 0.2s;
+    }
+    #player-name-display:hover{background:rgba(0,255,204,0.08);border-color:rgba(0,255,204,0.4);}
+    .name-icon{font-size:12px;}
+    #player-name-text{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;
+      color:#00ffcc;letter-spacing:0.08em;max-width:120px;overflow:hidden;text-overflow:ellipsis;
+      white-space:nowrap;}
     #glitch-overlay{
       position:absolute;inset:0;pointer-events:none;z-index:15;opacity:0;
       background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,0,255,0.03) 2px,rgba(255,0,255,0.03) 4px);
@@ -363,6 +489,10 @@
   <!-- HUD -->
   <div id="hud">
     <div class="hud-l">
+      <div id="player-name-display" onclick="openNameModal()" title="Click to change name">
+        <span class="name-icon">👤</span>
+        <div id="player-name-text">OPERATIVE</div>
+      </div>
       <div><div class="hud-lbl">SCORE</div><div class="hud-val" id="hud-score">0</div></div>
       <div><div class="hud-lbl">BEST</div><div class="hud-val" id="hud-best">0</div></div>
       <div><div class="hud-lbl">LIFETIME</div><div class="hud-val" id="hud-lifetime">0</div></div>
@@ -414,6 +544,41 @@
       <div id="death-stats" id="death-stats-inner"></div>
       <button id="death-restart" onclick="restartGame()">↺ RESTART</button>
     </div>
+    
+    <!-- Enhanced death screen -->
+    <div id="death-screen">
+      <div class="death-title">OPERATIVE DOWN</div>
+      <div class="death-subtitle">// SYSTEM FAILURE //</div>
+      <div class="death-stats" id="death-stats-grid"></div>
+      <div class="death-shards" id="death-shards-earned"></div>
+      <div class="death-buttons">
+        <button class="death-btn death-btn-retry" onclick="quickRetry()">⚡ RETRY</button>
+        <button class="death-btn death-btn-shop" onclick="openShopFromDeath()">💠 UPGRADE SHOP</button>
+      </div>
+    </div>
+    
+    <!-- Achievement notification -->
+    <div id="achievement-notify">
+      <div class="ach-header">🏆 ACHIEVEMENT UNLOCKED</div>
+      <div class="ach-title" id="ach-title"></div>
+      <div class="ach-desc" id="ach-desc"></div>
+      <div class="ach-reward" id="ach-reward"></div>
+    </div>
+    
+    <!-- Daily challenge panel -->
+    <div id="daily-panel">
+      <div class="daily-header">
+        <div class="daily-title">⏰ DAILY DIRECTIVE</div>
+        <div class="daily-time" id="daily-time-left"></div>
+      </div>
+      <div class="daily-objective" id="daily-objective"></div>
+      <div class="daily-progress">
+        <div class="daily-bar"><div class="daily-fill" id="daily-fill"></div></div>
+        <div class="daily-pct" id="daily-pct"></div>
+      </div>
+      <div class="daily-reward" id="daily-reward"></div>
+    </div>
+    
     <div id="boss-bar">
       <div id="boss-name">THE ARCHITECT</div>
       <div id="boss-phase-label">PHASE 1 — THE WALL</div>
@@ -478,6 +643,17 @@
           <button id="shop-close" onclick="closeShop()">✕ CLOSE</button>
         </div>
         <div id="shop-content"></div>
+      </div>
+    </div>
+    
+    <!-- Name input modal -->
+    <div id="name-modal">
+      <div class="name-welcome">WELCOME, OPERATIVE</div>
+      <div class="name-subtitle">// ENTER YOUR CALLSIGN FOR THE LEADERBOARD //</div>
+      <div class="name-input-container">
+        <div class="name-label">OPERATOR CALLSIGN:</div>
+        <input type="text" id="name-input" maxlength="20" placeholder="ENTER NAME" autocomplete="off" />
+        <button id="name-submit" onclick="submitName()">CONFIRM IDENTITY</button>
       </div>
     </div>
 
@@ -594,7 +770,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   function pushToLB(sc){
     const lb=loadLB();
-    const name='OPERATIVE_'+Math.floor(Math.random()*9000+1000);
+    const name = playerName || 'OPERATIVE_'+Math.floor(Math.random()*9000+1000);
     lb.push({name,score:sc,ts:Date.now()});
     lb.sort((a,b)=>b.score-a.score);
     lb.splice(10);
@@ -615,6 +791,226 @@ document.addEventListener('DOMContentLoaded', function() {
   loadData();
   refreshPaletteUnlocks(best);
   renderLB();
+
+  // ═══════════════════════════════════════════
+  //  ACHIEVEMENT SYSTEM
+  // ═══════════════════════════════════════════
+  const ACHIEVEMENTS = {
+    first_blood:    { name:'First Blood',      desc:'Destroy 10 enemies',                    reward:10,   check:(s)=>s.kills>=10 },
+    decimator:      { name:'Decimator',        desc:'Destroy 100 enemies in one run',        reward:25,   check:(s)=>s.kills>=100 },
+    combo_novice:   { name:'Combo Novice',     desc:'Reach a 25x combo',                     reward:15,   check:(s)=>s.maxCombo>=25 },
+    combo_master:   { name:'Combo Master',     desc:'Reach a 50x combo',                     reward:30,   check:(s)=>s.maxCombo>=50 },
+    combo_god:      { name:'Combo God',        desc:'Reach a 100x combo',                    reward:75,   check:(s)=>s.maxCombo>=100 },
+    scorer:         { name:'Rising Star',      desc:'Score 1,000 points',                    reward:20,   check:(s)=>s.score>=1000 },
+    high_roller:    { name:'High Roller',      desc:'Score 10,000 points',                   reward:50,   check:(s)=>s.score>=10000 },
+    legend:         { name:'Legend',           desc:'Score 50,000 points',                   reward:150,  check:(s)=>s.score>=50000 },
+    wish_maker:     { name:'Wish Maker',       desc:'Shoot a shooting star',                 reward:25,   check:(s)=>s.wishesGranted>=1 },
+    wish_hoarder:   { name:'Wish Hoarder',     desc:'Shoot 5 shooting stars',                reward:75,   check:(s)=>s.wishesGranted>=5 },
+    boss_slayer:    { name:'Boss Slayer',      desc:'Defeat THE ARCHITECT',                  reward:100,  check:(s)=>s.bossKills>=1 },
+    collector:      { name:'Shard Collector',  desc:'Collect 500 shards (total)',            reward:25,   check:(s)=>s.lifetimeShards>=500 },
+    hoarder:        { name:'Shard Hoarder',    desc:'Collect 2,000 shards (total)',          reward:75,   check:(s)=>s.lifetimeShards>=2000 },
+    survivor:       { name:'Survivor',         desc:'Survive 3 minutes in one run',          reward:40,   check:(s)=>s.survivalTime>=180*60 },
+    speed_demon:    { name:'Speed Demon',      desc:'Score 5,000 in under 2 minutes',        reward:60,   check:(s)=>s.score>=5000&&s.survivalTime<120*60 },
+    perfectionist:  { name:'Perfectionist',    desc:'Complete a run with 95%+ accuracy',     reward:100,  check:(s)=>s.shots>50&&(s.hits/s.shots)>=0.95 },
+  };
+
+  let achievements = {}; // {id: unlocked_timestamp}
+  let sessionStats = { kills:0, maxCombo:0, score:0, wishesGranted:0, bossKills:0, lifetimeShards:0, survivalTime:0, shots:0, hits:0 };
+
+  function loadAchievements(){
+    try{ achievements = JSON.parse(localStorage.getItem('neonShooterAchievements')||'{}'); }catch(e){}
+  }
+  function saveAchievements(){
+    try{ localStorage.setItem('neonShooterAchievements', JSON.stringify(achievements)); }catch(e){}
+  }
+  
+  function checkAchievements(){
+    Object.entries(ACHIEVEMENTS).forEach(([id,ach])=>{
+      if(achievements[id]) return; // Already unlocked
+      if(ach.check(sessionStats)){
+        achievements[id] = Date.now();
+        saveAchievements();
+        showAchievement(id);
+        shardWallet += ach.reward;
+        saveData();
+      }
+    });
+  }
+
+  function showAchievement(id){
+    const ach = ACHIEVEMENTS[id];
+    const el = document.getElementById('achievement-notify');
+    document.getElementById('ach-title').textContent = ach.name;
+    document.getElementById('ach-desc').textContent = ach.desc;
+    document.getElementById('ach-reward').textContent = `+${ach.reward} 💠 SHARDS`;
+    el.classList.remove('show');
+    void el.offsetWidth;
+    el.classList.add('show');
+    setTimeout(()=>el.classList.remove('show'), 4000);
+    addShake(6);
+  }
+
+  loadAchievements();
+
+  // ═══════════════════════════════════════════
+  //  DAILY CHALLENGE SYSTEM
+  // ═══════════════════════════════════════════
+  const DAILY_CHALLENGES = [
+    { id:'kills_50',     desc:'Destroy 50 enemies',           target:50,   reward:50,  track:'kills' },
+    { id:'kills_100',    desc:'Destroy 100 enemies',          target:100,  reward:100, track:'kills' },
+    { id:'score_5k',     desc:'Score 5,000 points',           target:5000, reward:75,  track:'score' },
+    { id:'combo_30',     desc:'Reach a 30x combo',            target:30,   reward:60,  track:'maxCombo' },
+    { id:'shards_100',   desc:'Collect 100 shards',           target:100,  reward:50,  track:'shards' },
+    { id:'spread_kills', desc:'Get 30 kills with Spread Shot',target:30,   reward:70,  track:'spreadKills' },
+    { id:'boss_phase',   desc:'Reach boss Phase 2',           target:1,    reward:80,  track:'bossPhase' },
+    { id:'survive_2min', desc:'Survive 2 minutes',            target:120,  reward:65,  track:'survivalSec' },
+  ];
+
+  let dailyChallenge = null; // {id, progress, completed, date}
+
+  function getDayStamp(){ return new Date().toISOString().split('T')[0]; }
+
+  function loadDailyChallenge(){
+    try{
+      const saved = JSON.parse(localStorage.getItem('neonShooterDaily')||'null');
+      if(saved && saved.date === getDayStamp()){
+        dailyChallenge = saved;
+      } else {
+        // New day - generate new challenge
+        const idx = Math.floor(Math.random() * DAILY_CHALLENGES.length);
+        dailyChallenge = {
+          id: DAILY_CHALLENGES[idx].id,
+          progress: 0,
+          completed: false,
+          date: getDayStamp()
+        };
+        saveDailyChallenge();
+      }
+    }catch(e){
+      const idx = Math.floor(Math.random() * DAILY_CHALLENGES.length);
+      dailyChallenge = { id: DAILY_CHALLENGES[idx].id, progress:0, completed:false, date:getDayStamp() };
+    }
+    renderDailyChallenge();
+  }
+
+  function saveDailyChallenge(){
+    try{ localStorage.setItem('neonShooterDaily', JSON.stringify(dailyChallenge)); }catch(e){}
+  }
+
+  function updateDailyChallenge(stat, value){
+    if(!dailyChallenge || dailyChallenge.completed) return;
+    const challenge = DAILY_CHALLENGES.find(c=>c.id === dailyChallenge.id);
+    if(!challenge) return;
+    if(challenge.track === stat){
+      dailyChallenge.progress = Math.max(dailyChallenge.progress, value);
+      if(dailyChallenge.progress >= challenge.target && !dailyChallenge.completed){
+        dailyChallenge.completed = true;
+        shardWallet += challenge.reward;
+        saveData();
+        showNotify(`DAILY COMPLETE! +${challenge.reward} SHARDS`,'#ffe600');
+        addShake(8);
+      }
+      saveDailyChallenge();
+      renderDailyChallenge();
+    }
+  }
+
+  function renderDailyChallenge(){
+    if(!dailyChallenge) return;
+    const challenge = DAILY_CHALLENGES.find(c=>c.id === dailyChallenge.id);
+    if(!challenge) return;
+    
+    const pct = Math.min(100, (dailyChallenge.progress / challenge.target) * 100);
+    document.getElementById('daily-objective').textContent = challenge.desc;
+    document.getElementById('daily-fill').style.width = pct + '%';
+    document.getElementById('daily-pct').textContent = `${dailyChallenge.progress}/${challenge.target}`;
+    
+    if(dailyChallenge.completed){
+      document.getElementById('daily-reward').innerHTML = '<span class="daily-complete">✓ COMPLETED</span>';
+    } else {
+      document.getElementById('daily-reward').textContent = `Reward: +${challenge.reward} 💠 Shards`;
+    }
+    
+    // Time until reset
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0,0,0,0);
+    const msLeft = tomorrow - now;
+    const hrs = Math.floor(msLeft / (1000*60*60));
+    const mins = Math.floor((msLeft % (1000*60*60)) / (1000*60));
+    document.getElementById('daily-time-left').textContent = `Resets in ${hrs}h ${mins}m`;
+  }
+
+  loadDailyChallenge();
+  setInterval(renderDailyChallenge, 60000); // Update timer every minute
+
+  // ═══════════════════════════════════════════
+  //  PLAYER NAME SYSTEM
+  // ═══════════════════════════════════════════
+  const NAME_KEY = 'neonShooterPlayerName';
+  let playerName = '';
+
+  function loadPlayerName(){
+    try{
+      playerName = localStorage.getItem(NAME_KEY) || '';
+      if(!playerName){
+        // First time player - show welcome modal
+        setTimeout(()=>openNameModal(), 500);
+      } else {
+        updateNameDisplay();
+      }
+    }catch(e){
+      playerName = 'OPERATIVE';
+      updateNameDisplay();
+    }
+  }
+
+  function savePlayerName(){
+    try{
+      localStorage.setItem(NAME_KEY, playerName);
+    }catch(e){}
+  }
+
+  function updateNameDisplay(){
+    const displayName = playerName || 'OPERATIVE';
+    document.getElementById('player-name-text').textContent = displayName;
+  }
+
+  window.openNameModal = function(){
+    const modal = document.getElementById('name-modal');
+    const input = document.getElementById('name-input');
+    input.value = playerName;
+    modal.classList.add('show');
+    setTimeout(()=>input.focus(), 100);
+  };
+
+  window.submitName = function(){
+    const input = document.getElementById('name-input');
+    const name = input.value.trim().toUpperCase();
+    if(name.length < 1){
+      input.style.borderColor = '#ff2d78';
+      setTimeout(()=>input.style.borderColor = '', 500);
+      return;
+    }
+    playerName = name.substring(0, 20); // Max 20 chars
+    savePlayerName();
+    updateNameDisplay();
+    document.getElementById('name-modal').classList.remove('show');
+    showNotify('CALLSIGN UPDATED: ' + playerName, '#00ffcc');
+  };
+
+  // Allow Enter key to submit
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const input = document.getElementById('name-input');
+    if(input){
+      input.addEventListener('keypress', (e)=>{
+        if(e.key === 'Enter') submitName();
+      });
+    }
+  });
+
+  loadPlayerName();
 
   // ═══════════════════════════════════════════
   //  GAME STATE
@@ -851,17 +1247,57 @@ document.addEventListener('DOMContentLoaded', function() {
   function triggerDeath(){
     if(isDying) return;
     isDying = true; deathTimer = 0; deathZoom = 1.0;
-    // Power-down sound
+    
+    // Update session stats for achievements
+    sessionStats.score = score;
+    sessionStats.survivalTime = Math.floor(performance.now() / 16.67); // Convert to frames
+    sessionStats.lifetimeShards = (lifetime || 0) + shards;
+    checkAchievements();
+    
+    // Play power-down sound
     playPowerDownSound();
-    // Show overlay after brief delay
-    const el = document.getElementById('death-overlay');
-    document.getElementById('death-stats').innerHTML =
-      `SCORE: ${score}<br>SECTOR: ${SECTORS[currentSector].name}<br>WAVE: ${wave}<br>COMBO PEAK: ${combo}`;
+    
+    // Show enhanced death screen after brief delay
     setTimeout(()=>{
-      el.classList.add('active');
-      el.style.pointerEvents='all';
-    }, 400);
-    saveData(); pushToLB(score);
+      const deathScreen = document.getElementById('death-screen');
+      const statsGrid = document.getElementById('death-stats-grid');
+      
+      // Calculate near-miss to high score
+      const pointsFromBest = Math.max(0, best - score);
+      const isNewRecord = score > best;
+      const isClose = !isNewRecord && pointsFromBest < 500;
+      
+      // Build stats display
+      statsGrid.innerHTML = `
+        <div class="death-stat">
+          <div class="death-stat-label">FINAL SCORE</div>
+          <div class="death-stat-value${isNewRecord?' record':isClose?' close':''}">${score.toLocaleString()}</div>
+          ${isNewRecord?'<div class="death-near-miss">🌟 NEW RECORD!</div>':''}
+          ${isClose&&!isNewRecord?`<div class="death-near-miss">Only ${pointsFromBest} from your best!</div>`:''}
+        </div>
+        <div class="death-stat">
+          <div class="death-stat-label">BEST SCORE</div>
+          <div class="death-stat-value">${Math.max(score,best).toLocaleString()}</div>
+        </div>
+        <div class="death-stat">
+          <div class="death-stat-label">MAX COMBO</div>
+          <div class="death-stat-value">${sessionStats.maxCombo}x</div>
+        </div>
+        <div class="death-stat">
+          <div class="death-stat-label">ENEMIES DESTROYED</div>
+          <div class="death-stat-value">${sessionStats.kills}</div>
+        </div>
+      `;
+      
+      // Show shards earned
+      const shardsEarned = shards + (achievements[Object.keys(achievements)[Object.keys(achievements).length-1]] ? Object.values(ACHIEVEMENTS)[Object.values(ACHIEVEMENTS).length-1].reward : 0);
+      document.getElementById('death-shards-earned').innerHTML = `💠 +${shardsEarned.toLocaleString()} SHARDS EARNED`;
+      
+      deathScreen.classList.add('show');
+    }, 600);
+    
+    saveData(); 
+    pushToLB(score);
   }
 
   function tickDeath(dt){
@@ -886,10 +1322,27 @@ document.addEventListener('DOMContentLoaded', function() {
     nextBossScore = 50; bossActive = false; boss = null;
     bossBar.classList.remove('visible');
     buildings.forEach(b=>b.reset(true));
+    
+    // Hide both death screens
     const el = document.getElementById('death-overlay');
     el.classList.remove('active'); el.style.pointerEvents='none';
+    document.getElementById('death-screen').classList.remove('show');
+    
     document.getElementById('wish-active-bar').innerHTML='';
+    
+    // Reset session stats for new run
+    sessionStats = { kills:0, maxCombo:0, score:0, wishesGranted:0, bossKills:0, lifetimeShards:shardWallet, survivalTime:0, shots:0, hits:0 };
+    
     updateHUD();
+  };
+
+  window.quickRetry = function(){
+    restartGame();
+  };
+
+  window.openShopFromDeath = function(){
+    document.getElementById('death-screen').classList.remove('show');
+    openShop();
   };
 
   function playPowerDownSound(){
@@ -1104,6 +1557,12 @@ document.addEventListener('DOMContentLoaded', function() {
       if(dist<18){
         const earned=s.value;
         shards+=earned;
+        
+        // Track shards collected
+        sessionStats.lifetimeShards = (shardWallet || 0) + shards;
+        updateDailyChallenge('shards', shards);
+        checkAchievements();
+        
         floatShard(ssx,ssy,earned);
         shardDrops.splice(i,1);
         document.getElementById('hud-shards').textContent=(shardWallet+shards).toLocaleString();
@@ -1601,6 +2060,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     _die(){
       this.dead = true;
+      
+      // Track boss kill
+      sessionStats.bossKills++;
+      updateDailyChallenge('bossPhase', this.phase);
+      checkAchievements();
+      
       for(let i=0;i<4;i++) setTimeout(()=>{
         spawnExplosion(this.sx+(Math.random()-0.5)*120, this.sy+(Math.random()-0.5)*200, 100, '#ff2d78', 20);
         addShake(14);
@@ -1838,6 +2303,9 @@ document.addEventListener('DOMContentLoaded', function() {
       dsx=nx;dsy=ny;
     }
     bullets.push({x:0,y:0,z:5,vz,dsx,dsy,alive:true});
+    
+    // Track shot fired
+    sessionStats.shots++;
   }
 
   function updateBullets(dt){
@@ -1873,6 +2341,23 @@ document.addEventListener('DOMContentLoaded', function() {
           score+=pts;lifetime+=pts;
           if(score>best)best=score;
           combo++;comboTimer=getComboWindow();
+          
+          // Track for achievements and daily challenges
+          sessionStats.kills++;
+          sessionStats.maxCombo = Math.max(sessionStats.maxCombo, combo);
+          sessionStats.score = score;
+          sessionStats.hits++;
+          if(puSpread > 0) sessionStats.spreadKills = (sessionStats.spreadKills || 0) + 1;
+          
+          // Check achievements after each kill
+          checkAchievements();
+          
+          // Update daily challenge
+          updateDailyChallenge('kills', sessionStats.kills);
+          updateDailyChallenge('score', score);
+          updateDailyChallenge('maxCombo', sessionStats.maxCombo);
+          updateDailyChallenge('spreadKills', sessionStats.spreadKills || 0);
+          
           if(combo%5===0)triggerGlitch();
           checkMilestone();
           spawnExplosion(b.x,b.y,b.z,wishChromatic>0?`hsl(${chromaticHue},100%,60%)`:bd.color,18);
@@ -2205,8 +2690,8 @@ document.addEventListener('DOMContentLoaded', function() {
     shootingStars.push({
       x: side<0 ? -0.05 : 1.05,
       y: 0.05 + Math.random()*0.35,
-      vx: side * (0.004 + Math.random()*0.004),
-      vy: 0.001 + Math.random()*0.002,
+      vx: side * (0.0024 + Math.random()*0.0024), // 40% slower: 0.0024-0.0048 instead of 0.004-0.008
+      vy: 0.0006 + Math.random()*0.0012, // 40% slower: 0.0006-0.0018 instead of 0.001-0.003
       trail: [],
       alive: true,
       hit: false,
@@ -2224,14 +2709,14 @@ document.addEventListener('DOMContentLoaded', function() {
     shootingStarTimer += dt;
     if(shootingStarTimer >= nextShootingStarIn){
       shootingStarTimer = 0;
-      nextShootingStarIn = rand(60*60, 90*60);
+      nextShootingStarIn = rand(45*60, 60*60); // More frequent: 45-60 seconds
       spawnShootingStar();
     }
 
     for(let i=shootingStars.length-1;i>=0;i--){
       const s=shootingStars[i];
       s.trail.push({x:s.x,y:s.y});
-      if(s.trail.length>22)s.trail.shift();
+      if(s.trail.length>50)s.trail.shift(); // Longer trail: 50 points instead of 22
       s.x+=s.vx*dt;
       s.y+=s.vy*dt;
       s.sx=s.x*W; s.sy=s.y*H;
@@ -2245,8 +2730,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const sx=W/2+bx*sc, sy=H/2+by*sc;
     for(let i=shootingStars.length-1;i>=0;i--){
       const s=shootingStars[i];
-      if(Math.hypot(sx-s.sx, sy-s.sy)<28){
+      if(Math.hypot(sx-s.sx, sy-s.sy)<60){ // Bigger hitbox: 60px radius instead of 28px
         s.hit=true;
+        
+        // Track wish granted
+        sessionStats.wishesGranted++;
+        checkAchievements();
+        
         openWishModal();
         addShake(12);
         triggerGlitch();
@@ -2369,32 +2859,87 @@ document.addEventListener('DOMContentLoaded', function() {
   function drawShootingStars(){
     shootingStars.forEach(s=>{
       if(s.trail.length<2)return;
-      // Trail
+      
+      // Enhanced trail with much better visibility
       for(let i=1;i<s.trail.length;i++){
         const t=i/s.trail.length;
-        ctx.strokeStyle=`rgba(255,230,0,${t*0.6})`;
-        ctx.lineWidth=t*2.5;
+        // Brighter, more opaque trail
+        ctx.strokeStyle=`rgba(255,230,0,${t*0.9})`; // Increased opacity from 0.6 to 0.9
+        ctx.lineWidth=t*7; // Thicker trail: 7px instead of 2.5px
         ctx.beginPath();
         ctx.moveTo(s.trail[i-1].x*W,s.trail[i-1].y*H);
         ctx.lineTo(s.trail[i].x*W,s.trail[i].y*H);
         ctx.stroke();
       }
-      // Star head
-      const pulse=0.7+0.3*Math.sin(tick*0.3);
-      ctx.save();
-      ctx.shadowColor='#ffe600';ctx.shadowBlur=20*pulse;
-      ctx.fillStyle='#ffe600';
-      ctx.beginPath();ctx.arc(s.x*W,s.y*H,5*pulse,0,Math.PI*2);ctx.fill();
-      // Sparkle
-      ctx.strokeStyle=`rgba(255,255,200,${pulse*0.8})`;ctx.lineWidth=1;
-      const sp=10*pulse;
-      for(let a=0;a<4;a++){
-        const ang=(a/4)*Math.PI*2+tick*0.05;
+      
+      // Outer glow trail for extra visibility
+      for(let i=1;i<s.trail.length;i++){
+        const t=i/s.trail.length;
+        ctx.strokeStyle=`rgba(255,230,0,${t*0.3})`;
+        ctx.lineWidth=t*14; // Outer glow
         ctx.beginPath();
-        ctx.moveTo(s.x*W+Math.cos(ang)*3,s.y*H+Math.sin(ang)*3);
+        ctx.moveTo(s.trail[i-1].x*W,s.trail[i-1].y*H);
+        ctx.lineTo(s.trail[i].x*W,s.trail[i].y*H);
+        ctx.stroke();
+      }
+      
+      const pulse=0.8+0.2*Math.sin(tick*0.3);
+      const fastPulse=0.7+0.3*Math.sin(tick*0.8);
+      
+      ctx.save();
+      
+      // Massive outer glow ring (pulsing)
+      ctx.shadowColor='#ffe600';
+      ctx.shadowBlur=80*fastPulse; // Huge glow: 80px instead of 20px
+      ctx.fillStyle=`rgba(255,230,0,${0.15*fastPulse})`;
+      ctx.beginPath();
+      ctx.arc(s.x*W,s.y*H,35*fastPulse,0,Math.PI*2); // Large outer ring
+      ctx.fill();
+      
+      // Medium glow ring
+      ctx.shadowBlur=50*pulse;
+      ctx.fillStyle=`rgba(255,230,0,${0.3*pulse})`;
+      ctx.beginPath();
+      ctx.arc(s.x*W,s.y*H,22*pulse,0,Math.PI*2);
+      ctx.fill();
+      
+      // Star head - much bigger and brighter
+      ctx.shadowBlur=40*pulse;
+      ctx.fillStyle='#ffe600';
+      ctx.beginPath();
+      ctx.arc(s.x*W,s.y*H,15*pulse,0,Math.PI*2); // 15px instead of 5px - 3x bigger!
+      ctx.fill();
+      
+      // Inner bright core
+      ctx.shadowBlur=20;
+      ctx.fillStyle='#ffffff';
+      ctx.beginPath();
+      ctx.arc(s.x*W,s.y*H,8*pulse,0,Math.PI*2);
+      ctx.fill();
+      
+      // Enhanced sparkle rays
+      ctx.strokeStyle=`rgba(255,255,255,${pulse*0.9})`;
+      ctx.lineWidth=2.5; // Thicker rays
+      const sp=25*pulse; // Longer rays: 25px instead of 10px
+      for(let a=0;a<8;a++){ // 8 rays instead of 4
+        const ang=(a/8)*Math.PI*2+tick*0.08;
+        ctx.beginPath();
+        ctx.moveTo(s.x*W+Math.cos(ang)*8,s.y*H+Math.sin(ang)*8);
         ctx.lineTo(s.x*W+Math.cos(ang)*sp,s.y*H+Math.sin(ang)*sp);
         ctx.stroke();
       }
+      
+      // Rotating secondary sparkle
+      ctx.strokeStyle=`rgba(255,230,0,${fastPulse*0.6})`;
+      ctx.lineWidth=1.5;
+      for(let a=0;a<8;a++){
+        const ang=(a/8)*Math.PI*2-tick*0.08;
+        ctx.beginPath();
+        ctx.moveTo(s.x*W+Math.cos(ang)*12,s.y*H+Math.sin(ang)*12);
+        ctx.lineTo(s.x*W+Math.cos(ang)*18,s.y*H+Math.sin(ang)*18);
+        ctx.stroke();
+      }
+      
       ctx.restore();
     });
   }
@@ -2423,6 +2968,12 @@ document.addEventListener('DOMContentLoaded', function() {
     last=now;
     const dt=Math.min(raw,3);
     tick++;
+    
+    // Track survival time (frames alive)
+    if(!isDying){
+      sessionStats.survivalTime++;
+      updateDailyChallenge('survivalSec', Math.floor(sessionStats.survivalTime / 60));
+    }
 
     if(isDying){ tickDeath(dt); }
     updateShake(dt);
