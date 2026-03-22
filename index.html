@@ -111,23 +111,45 @@
     .pal-btn.active{border-color:currentColor;text-shadow:0 0 6px currentColor;}
     .pal-btn.locked{opacity:0.3;cursor:default;}
 
-    /* ── Boss HP bar — THE ARCHITECT ── */
+    /* ── Boss HP bar — Enhanced Visibility ── */
     #boss-bar{
-      display:none;position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
-      width:420px;z-index:20;text-align:center;
+      display:none;position:absolute;bottom:40px;left:50%;transform:translateX(-50%);
+      width:700px;z-index:20;text-align:center;
+      background:rgba(0,0,0,0.85);padding:16px 24px;border-radius:4px;
+      border:2px solid rgba(255,45,120,0.6);
+      box-shadow:0 0 30px rgba(255,45,120,0.4), 0 0 60px rgba(255,45,120,0.2);
     }
-    #boss-bar.visible{display:block;}
-    #boss-name{font-family:'Orbitron',monospace;font-size:13px;font-weight:900;color:#ff2d78;
-      letter-spacing:0.2em;margin-bottom:3px;text-shadow:0 0 14px #ff2d78;}
-    #boss-phase-label{font-family:'Share Tech Mono',monospace;font-size:9px;
-      color:rgba(255,45,120,0.55);letter-spacing:0.18em;margin-bottom:5px;}
-    #boss-hp-track{height:10px;background:rgba(255,255,255,0.06);
-      border:1px solid rgba(255,45,120,0.35);border-radius:1px;position:relative;}
-    #boss-hp-fill{height:100%;background:linear-gradient(90deg,#ff2d78,#ff6600);
-      border-radius:1px;transition:width 0.15s;}
+    #boss-bar.visible{display:block;animation:bossPulse 2s ease-in-out infinite alternate;}
+    @keyframes bossPulse{
+      from{box-shadow:0 0 30px rgba(255,45,120,0.4), 0 0 60px rgba(255,45,120,0.2);}
+      to{box-shadow:0 0 40px rgba(255,45,120,0.6), 0 0 80px rgba(255,45,120,0.3);}
+    }
+    #boss-name{font-family:'Orbitron',monospace;font-size:20px;font-weight:900;color:#ff2d78;
+      letter-spacing:0.2em;margin-bottom:6px;text-shadow:0 0 20px #ff2d78, 0 0 40px rgba(255,45,120,0.6);
+      text-transform:uppercase;}
+    #boss-phase-label{font-family:'Share Tech Mono',monospace;font-size:11px;
+      color:rgba(255,45,120,0.8);letter-spacing:0.18em;margin-bottom:10px;
+      text-shadow:0 0 8px rgba(255,45,120,0.5);}
+    #boss-hp-track{height:24px;background:rgba(0,0,0,0.6);
+      border:2px solid rgba(255,45,120,0.8);border-radius:3px;position:relative;
+      box-shadow:0 0 15px rgba(255,45,120,0.3) inset;}
+    #boss-hp-fill{height:100%;background:linear-gradient(90deg,#ff2d78,#ff6600,#ffaa00);
+      border-radius:2px;transition:width 0.15s;
+      box-shadow:0 0 20px rgba(255,45,120,0.8), 0 0 30px rgba(255,102,0,0.5);
+      position:relative;overflow:hidden;}
+    #boss-hp-fill::after{
+      content:'';position:absolute;inset:0;
+      background:linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+      animation:hpShine 2s linear infinite;
+    }
+    @keyframes hpShine{
+      0%{transform:translateX(-100%);}
+      100%{transform:translateX(100%);}
+    }
     /* Phase threshold markers */
-    .boss-threshold{position:absolute;top:0;bottom:0;width:1px;
-      background:rgba(255,255,255,0.35);pointer-events:none;}
+    .boss-threshold{position:absolute;top:0;bottom:0;width:2px;
+      background:rgba(255,255,255,0.6);pointer-events:none;
+      box-shadow:0 0 10px rgba(255,255,255,0.8);}
 
     /* ── ARCHITECT entrance overlay ── */
     #architect-intro{
@@ -446,10 +468,10 @@
       100%{transform:translateY(0);}
     }
 
-    /* ── SLOW-MO DEATH SCREEN ── */
+    /* ── SLOW-MO DEATH SCREEN (DEPRECATED - using new death-screen instead) ── */
     #death-overlay{
       position:absolute;inset:0;z-index:60;pointer-events:none;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      display:none;flex-direction:column;align-items:center;justify-content:center;
       opacity:0;background:rgba(4,1,14,0);
     }
     #death-overlay.active{
@@ -504,7 +526,7 @@
     <div class="hud-r">
       <div><div class="hud-lbl">WAVE</div><div class="hud-val" id="hud-wave">1</div></div>
       <div><div class="hud-lbl">SPEED</div><div class="hud-val" id="hud-speed">3.0</div></div>
-      <div id="shard-hud" onclick="openShop()" title="Open Upgrade Shop">
+      <div id="shard-hud" onclick="openShopNormal()" title="Open Upgrade Shop">
         <span style="animation:shardSpin 4s linear infinite;display:inline-block;">💠</span>
         <span id="hud-shards">0</span>
         <span style="font-size:8px;color:rgba(178,75,255,0.5);letter-spacing:0.1em;">SHARDS</span>
@@ -520,7 +542,7 @@
     <div class="pu-slot" id="pu-overclock">OVERCLOCK</div>
     <div class="pu-slot" id="pu-slowmo">SLOWMO</div>
     <span style="margin-left:auto;color:rgba(0,255,204,0.35);font-size:9px;">SHOOT BUILDINGS TO COLLECT DROPS</span>
-    <button onclick="openShop()" style="font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;padding:4px 12px;background:rgba(178,75,255,0.12);border:1px solid rgba(178,75,255,0.35);color:#b24bff;cursor:pointer;border-radius:1px;">💠 SHOP</button>
+    <button onclick="openShopNormal()" style="font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:0.1em;padding:4px 12px;background:rgba(178,75,255,0.12);border:1px solid rgba(178,75,255,0.35);color:#b24bff;cursor:pointer;border-radius:1px;">💠 SHOP</button>
   </div>
 
   <!-- Game canvas -->
@@ -1257,6 +1279,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Play power-down sound
     playPowerDownSound();
     
+    // Make sure old death overlay is hidden
+    const oldOverlay = document.getElementById('death-overlay');
+    oldOverlay.classList.remove('active');
+    oldOverlay.style.display = 'none';
+    
     // Show enhanced death screen after brief delay
     setTimeout(()=>{
       const deathScreen = document.getElementById('death-screen');
@@ -1289,9 +1316,8 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
       `;
       
-      // Show shards earned
-      const shardsEarned = shards + (achievements[Object.keys(achievements)[Object.keys(achievements).length-1]] ? Object.values(ACHIEVEMENTS)[Object.values(ACHIEVEMENTS).length-1].reward : 0);
-      document.getElementById('death-shards-earned').innerHTML = `💠 +${shardsEarned.toLocaleString()} SHARDS EARNED`;
+      // Show shards earned this run
+      document.getElementById('death-shards-earned').innerHTML = `💠 +${shards.toLocaleString()} SHARDS EARNED`;
       
       deathScreen.classList.add('show');
     }, 600);
@@ -1323,10 +1349,21 @@ document.addEventListener('DOMContentLoaded', function() {
     bossBar.classList.remove('visible');
     buildings.forEach(b=>b.reset(true));
     
-    // Hide both death screens
-    const el = document.getElementById('death-overlay');
-    el.classList.remove('active'); el.style.pointerEvents='none';
-    document.getElementById('death-screen').classList.remove('show');
+    // Hide both death screens completely
+    const oldOverlay = document.getElementById('death-overlay');
+    oldOverlay.classList.remove('active');
+    oldOverlay.style.pointerEvents='none';
+    oldOverlay.style.display='none';
+    
+    const newDeathScreen = document.getElementById('death-screen');
+    newDeathScreen.classList.remove('show');
+    
+    // Close shop if open
+    if(shopOpen){
+      document.getElementById('shop-modal').classList.remove('open');
+      shopOpen = false;
+    }
+    shopOpenedFromDeath = false; // Reset the flag
     
     document.getElementById('wish-active-bar').innerHTML='';
     
@@ -1341,6 +1378,7 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   window.openShopFromDeath = function(){
+    shopOpenedFromDeath = true; // Mark that shop was opened from death screen
     document.getElementById('death-screen').classList.remove('show');
     openShop();
   };
@@ -1436,15 +1474,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ── Shop UI ──
   let shopOpen = false;
+  let shopOpenedFromDeath = false; // Track if shop was opened from death screen
+  
   window.openShop = function(){
     shopOpen=true;
+    // Don't reset shopOpenedFromDeath here - let the caller control it
     document.getElementById('shop-modal').classList.add('open');
     renderShop();
   };
+  
+  window.openShopNormal = function(){
+    shopOpenedFromDeath = false; // Normal shop open, not from death
+    openShop();
+  };
+  
   window.closeShop = function(){
     shopOpen=false;
     document.getElementById('shop-modal').classList.remove('open');
     saveData();
+    
+    // If shop was opened from death screen, return to death screen
+    if(shopOpenedFromDeath && isDying){
+      document.getElementById('death-screen').classList.add('show');
+      shopOpenedFromDeath = false;
+    }
   };
 
   function totalShards(){ return shardWallet + shards; }
@@ -1814,6 +1867,385 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ══════════════════════════════════════════════════════
+  //  MINI BOSSES — Smaller challenging enemies
+  // ══════════════════════════════════════════════════════
+  
+  // ── DRONE SWARM — 3 synchronized drones ──
+  class DroneSwarm {
+    constructor(maxHp){
+      this.maxHp = maxHp;
+      this.hp = maxHp;
+      this.dead = false;
+      this.hitFlash = 0;
+      this.tick = 0;
+      this.type = 'drone_swarm';
+      
+      // Create 3 drones in triangular formation
+      this.drones = [
+        { x: W*0.75, y: H*0.25, vx:0, vy:0, alive:true, hp:Math.ceil(maxHp/3) },
+        { x: W*0.85, y: H*0.35, vx:0, vy:0, alive:true, hp:Math.ceil(maxHp/3) },
+        { x: W*0.75, y: H*0.45, vx:0, vy:0, alive:true, hp:Math.ceil(maxHp/3) }
+      ];
+      this.shootTimer = 0;
+      this.projectiles = [];
+    }
+    
+    update(dt){
+      if(this.dead) return;
+      this.tick += dt;
+      this.hitFlash = Math.max(0, this.hitFlash - dt);
+      
+      // Move drones in synchronized wave pattern
+      this.drones.forEach((d,i)=>{
+        if(!d.alive) return;
+        const targetY = H*0.35 + Math.sin(this.tick*0.015 + i*2)*60;
+        const targetX = W*0.75 + Math.sin(this.tick*0.008)*40;
+        d.vy = (targetY - d.y) * 0.02;
+        d.vx = (targetX - d.x) * 0.02;
+        d.x += d.vx * dt;
+        d.y += d.vy * dt;
+      });
+      
+      // Shoot projectiles
+      this.shootTimer += dt;
+      if(this.shootTimer >= 90){
+        this.shootTimer = 0;
+        this.drones.forEach(d=>{
+          if(d.alive){
+            this.projectiles.push({
+              x:d.x, y:d.y, vx:-3-Math.random()*2, vy:(Math.random()-0.5)*2, life:200
+            });
+          }
+        });
+      }
+      
+      // Update projectiles
+      for(let i=this.projectiles.length-1;i>=0;i--){
+        const p = this.projectiles[i];
+        p.x += p.vx * dt * 0.5;
+        p.y += p.vy * dt * 0.5;
+        p.life -= dt;
+        
+        // Player hit check
+        if(Math.hypot(p.x-mX, p.y-mY) < 16 && mInside){
+          this.projectiles.splice(i,1);
+          if(!isDying){ triggerDeath(); }
+          continue;
+        }
+        
+        if(p.life<=0 || p.x<0) this.projectiles.splice(i,1);
+      }
+    }
+    
+    bulletHit(bx,by,bz){
+      const sc = focal/Math.max(1,bz);
+      const bsx = W/2+bx*sc, bsy = H/2+by*sc;
+      
+      for(let i=0;i<this.drones.length;i++){
+        const d = this.drones[i];
+        if(!d.alive) continue;
+        if(Math.hypot(bsx-d.x, bsy-d.y) < 35){
+          d.hp--;
+          this.hp--;
+          this.hitFlash = 8;
+          bossHPF.style.width = (this.hp/this.maxHp*100)+'%';
+          addShake(3);
+          spawnExplosion(bx,by,bz,'#00ffff',4);
+          if(d.hp <= 0){
+            d.alive = false;
+            spawnExplosion(bx,by,bz,'#00ffff',12);
+            addShake(6);
+          }
+          if(this.hp <= 0) this._die();
+          return true;
+        }
+      }
+      return false;
+    }
+    
+    _die(){
+      this.dead = true;
+      this.drones.forEach(d=>d.alive=false);
+      for(let i=0;i<3;i++){
+        setTimeout(()=>{
+          spawnExplosion(W*0.75+Math.random()*100, H*0.35+Math.random()*100, 100, '#00ffff', 20);
+          addShake(10);
+        }, i*100);
+      }
+      const pts = 25*combo*wishMultiplier;
+      score+=pts; lifetime+=pts;
+      if(score>best) best=score;
+      dropShards(0,0,100, 15+getBossShardBonus());
+      showNotify('DRONE SWARM ELIMINATED! +'+pts,'#00ffff');
+      bossActive=false; boss=null;
+      bossBar.classList.remove('visible');
+      nextBossScore = score + 30;
+      updateHUD(); saveData(); pushToLB(score);
+    }
+    
+    draw(){
+      if(this.dead) return;
+      
+      // Draw drones
+      this.drones.forEach(d=>{
+        if(!d.alive) return;
+        const flash = this.hitFlash > 0;
+        const col = flash ? '#ffffff' : '#00ffff';
+        
+        ctx.save();
+        ctx.strokeStyle = col;
+        ctx.shadowColor = col;
+        ctx.shadowBlur = 15;
+        ctx.lineWidth = 2;
+        
+        // Hexagonal drone body
+        ctx.beginPath();
+        for(let i=0;i<6;i++){
+          const ang = (i/6)*Math.PI*2 + this.tick*0.02;
+          const r = 20;
+          const px = d.x + Math.cos(ang)*r;
+          const py = d.y + Math.sin(ang)*r;
+          if(i===0) ctx.moveTo(px,py);
+          else ctx.lineTo(px,py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+        
+        // Core
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, 6, 0, Math.PI*2);
+        ctx.fill();
+        
+        // HP bar - Enhanced visibility
+        const hpw = 60; // Wider: 60px instead of 40px
+        const hph = 6;  // Taller: 6px instead of 4px
+        ctx.shadowBlur = 0; // Reset shadow for HP bar
+        
+        // Background
+        ctx.fillStyle = 'rgba(0,0,0,0.85)';
+        ctx.fillRect(d.x-hpw/2-2, d.y+30-2, hpw+4, hph+4);
+        
+        // Track
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(d.x-hpw/2, d.y+30, hpw, hph);
+        
+        // Fill with glow
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = '#00ffff';
+        ctx.fillRect(d.x-hpw/2, d.y+30, hpw*(d.hp/(this.maxHp/3)), hph);
+        ctx.shadowBlur = 0;
+        
+        // Border
+        ctx.strokeStyle = 'rgba(0,255,255,0.6)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(d.x-hpw/2, d.y+30, hpw, hph);
+        
+        ctx.restore();
+      });
+      
+      // Draw projectiles
+      ctx.save();
+      ctx.fillStyle = '#00ffff';
+      ctx.shadowColor = '#00ffff';
+      ctx.shadowBlur = 10;
+      this.projectiles.forEach(p=>{
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4, 0, Math.PI*2);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+    
+    getSiphon(){ return 0; }
+  }
+  
+  // ── BARRIER TANK — Heavily armored slow enemy ──
+  class BarrierTank {
+    constructor(maxHp){
+      this.maxHp = maxHp;
+      this.hp = maxHp;
+      this.dead = false;
+      this.hitFlash = 0;
+      this.tick = 0;
+      this.type = 'barrier_tank';
+      
+      this.x = W * 0.85;
+      this.y = H * 0.5;
+      this.vx = -0.3;
+      this.vy = 0;
+      
+      this.barriers = [
+        {x:-60, y:0, hp:Math.ceil(maxHp*0.2), maxHp:Math.ceil(maxHp*0.2)},
+        {x:60, y:0, hp:Math.ceil(maxHp*0.2), maxHp:Math.ceil(maxHp*0.2)}
+      ];
+      
+      this.shootTimer = 0;
+      this.projectiles = [];
+    }
+    
+    update(dt){
+      if(this.dead) return;
+      this.tick += dt;
+      this.hitFlash = Math.max(0, this.hitFlash - dt);
+      
+      // Slow advance
+      this.x += this.vx * dt;
+      this.y += Math.sin(this.tick*0.01)*0.5*dt;
+      
+      // Shoot every 120 frames
+      this.shootTimer += dt;
+      if(this.shootTimer >= 120){
+        this.shootTimer = 0;
+        this.projectiles.push({
+          x:this.x-40, y:this.y, vx:-4, vy:0, life:180
+        });
+      }
+      
+      // Update projectiles
+      for(let i=this.projectiles.length-1;i>=0;i--){
+        const p = this.projectiles[i];
+        p.x += p.vx * dt * 0.5;
+        p.life -= dt;
+        
+        // Player hit check
+        if(Math.hypot(p.x-mX, p.y-mY) < 18 && mInside){
+          this.projectiles.splice(i,1);
+          if(!isDying){ triggerDeath(); }
+          continue;
+        }
+        
+        if(p.life<=0 || p.x<0) this.projectiles.splice(i,1);
+      }
+    }
+    
+    bulletHit(bx,by,bz){
+      const sc = focal/Math.max(1,bz);
+      const bsx = W/2+bx*sc, bsy = H/2+by*sc;
+      
+      // Check barrier hits first
+      for(let i=0;i<this.barriers.length;i++){
+        const b = this.barriers[i];
+        const bx2 = this.x + b.x;
+        const by2 = this.y + b.y;
+        if(Math.hypot(bsx-bx2, bsy-by2) < 30){
+          b.hp--;
+          this.hitFlash = 5;
+          addShake(2);
+          spawnExplosion(bx,by,bz,'#ff6600',3);
+          if(b.hp <= 0){
+            this.barriers.splice(i,1);
+            spawnExplosion(bx,by,bz,'#ff6600',10);
+            addShake(5);
+          }
+          return true;
+        }
+      }
+      
+      // Main body hit
+      if(Math.hypot(bsx-this.x, bsy-this.y) < 40){
+        this.hp--;
+        this.hitFlash = 10;
+        bossHPF.style.width = (this.hp/this.maxHp*100)+'%';
+        addShake(4);
+        spawnExplosion(bx,by,bz,'#ff6600',6);
+        if(this.hp <= 0) this._die();
+        return true;
+      }
+      return false;
+    }
+    
+    _die(){
+      this.dead = true;
+      for(let i=0;i<2;i++){
+        setTimeout(()=>{
+          spawnExplosion(this.x+(Math.random()-0.5)*60, this.y+(Math.random()-0.5)*60, 100, '#ff6600', 20);
+          addShake(12);
+        }, i*150);
+      }
+      const pts = 30*combo*wishMultiplier;
+      score+=pts; lifetime+=pts;
+      if(score>best) best=score;
+      dropShards(0,0,100, 18+getBossShardBonus());
+      showNotify('BARRIER TANK DESTROYED! +'+pts,'#ff6600');
+      bossActive=false; boss=null;
+      bossBar.classList.remove('visible');
+      nextBossScore = score + 30;
+      updateHUD(); saveData(); pushToLB(score);
+    }
+    
+    draw(){
+      if(this.dead) return;
+      const flash = this.hitFlash > 0;
+      
+      ctx.save();
+      
+      // Draw barriers
+      this.barriers.forEach(b=>{
+        const bx = this.x + b.x;
+        const by = this.y + b.y;
+        ctx.strokeStyle = flash ? '#ffffff' : '#ff6600';
+        ctx.shadowColor = '#ff6600';
+        ctx.shadowBlur = 12;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(bx-25, by-35, 50, 70);
+        
+        // HP bar - Enhanced visibility
+        const hpw = 60; // Wider: 60px instead of 50px
+        const hph = 8;  // Taller: 8px instead of 4px
+        
+        // Background
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(0,0,0,0.85)';
+        ctx.fillRect(bx-hpw/2-2, by+42-2, hpw+4, hph+4);
+        
+        // Track
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(bx-hpw/2, by+42, hpw, hph);
+        
+        // Fill with glow
+        ctx.shadowColor = '#ff6600';
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = '#ff6600';
+        ctx.fillRect(bx-hpw/2, by+42, hpw*(b.hp/b.maxHp), hph);
+        ctx.shadowBlur = 0;
+        
+        // Border
+        ctx.strokeStyle = 'rgba(255,102,0,0.8)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bx-hpw/2, by+42, hpw, hph);
+      });
+      
+      // Main body
+      const col = flash ? '#ffffff' : '#ff6600';
+      ctx.strokeStyle = col;
+      ctx.shadowColor = col;
+      ctx.shadowBlur = 15;
+      ctx.lineWidth = 4;
+      ctx.strokeRect(this.x-35, this.y-35, 70, 70);
+      
+      // Core
+      ctx.fillStyle = col;
+      ctx.fillRect(this.x-10, this.y-10, 20, 20);
+      
+      ctx.restore();
+      
+      // Projectiles
+      ctx.save();
+      ctx.fillStyle = '#ff6600';
+      ctx.shadowColor = '#ff6600';
+      ctx.shadowBlur = 10;
+      this.projectiles.forEach(p=>{
+        ctx.fillRect(p.x-6, p.y-6, 12, 12);
+      });
+      ctx.restore();
+    }
+    
+    getSiphon(){ return 0; }
+  }
+  
+  // ══════════════════════════════════════════════════════
   //  THE ARCHITECT — Phase-based sentient skyscraper boss
   // ══════════════════════════════════════════════════════
   class Architect {
@@ -2110,9 +2542,30 @@ document.addEventListener('DOMContentLoaded', function() {
           // Inner cross
           ctx.beginPath();ctx.moveTo(sx-hw*0.5,sy);ctx.lineTo(sx+hw*0.5,sy);ctx.stroke();
           ctx.beginPath();ctx.moveTo(sx,sy-hh*0.5);ctx.lineTo(sx,sy+hh*0.5);ctx.stroke();
-          // HP mini-bar
-          ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(sx-hw,sy+hh+3,hw*2,4);
-          ctx.fillStyle='#ff6600';ctx.fillRect(sx-hw,sy+hh+3,hw*2*(seg.hp/seg.maxHp),4);
+          // HP mini-bar - Enhanced visibility
+          const hpBarWidth = hw*2;
+          const hpBarHeight = 6; // Taller: 6px instead of 4px
+          const hpBarY = sy+hh+5;
+          
+          // Background
+          ctx.fillStyle='rgba(0,0,0,0.85)';
+          ctx.fillRect(sx-hw-2, hpBarY-2, hpBarWidth+4, hpBarHeight+4);
+          
+          // Track
+          ctx.fillStyle='rgba(0,0,0,0.7)';
+          ctx.fillRect(sx-hw, hpBarY, hpBarWidth, hpBarHeight);
+          
+          // Fill with glow
+          ctx.shadowColor='#ff6600';
+          ctx.shadowBlur=10;
+          ctx.fillStyle='#ff6600';
+          ctx.fillRect(sx-hw, hpBarY, hpBarWidth*(seg.hp/seg.maxHp), hpBarHeight);
+          ctx.shadowBlur=0;
+          
+          // Border
+          ctx.strokeStyle='rgba(255,102,0,0.8)';
+          ctx.lineWidth=1;
+          ctx.strokeRect(sx-hw, hpBarY, hpBarWidth, hpBarHeight);
         });
       }
 
@@ -2226,8 +2679,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function checkBoss(){
     if(!bossActive && score>=nextBossScore && score>0){
-      spawnArchitect();
+      // Decide which boss to spawn
+      // Every 100 points = mini boss, every 200 points = THE ARCHITECT
+      const bossCount = Math.floor(score / 30);
+      
+      if(bossCount % 4 === 3 && score >= 100){
+        // Every 4th boss is THE ARCHITECT (at 100+ score)
+        spawnArchitect();
+      } else {
+        // Spawn mini boss
+        spawnMiniBoss();
+      }
     }
+  }
+  
+  function spawnMiniBoss(){
+    bossActive = true;
+    const hp = 30 + Math.floor(score/50)*10;
+    
+    // Choose random mini boss type
+    const types = ['drone_swarm', 'barrier_tank'];
+    const type = types[Math.floor(Math.random() * types.length)];
+    
+    if(type === 'drone_swarm'){
+      boss = new DroneSwarm(hp);
+      document.getElementById('boss-name').textContent='DRONE SWARM';
+      document.getElementById('boss-phase-label').textContent='ELIMINATE ALL UNITS';
+    } else if(type === 'barrier_tank'){
+      boss = new BarrierTank(hp);
+      document.getElementById('boss-name').textContent='BARRIER TANK';
+      document.getElementById('boss-phase-label').textContent='HEAVY ASSAULT UNIT';
+    }
+    
+    bossHPF.style.width='100%';
+    bossBar.classList.add('visible');
+    worldSpeed *= 0.7;
+    triggerGlitch(); addShake(6);
+    showNotify('⚠ MINI BOSS INCOMING ⚠','#ff6600');
   }
 
   // ── Laser sound ──
