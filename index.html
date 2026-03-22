@@ -663,7 +663,7 @@
         <div id="shop-header">
           <div id="shop-title">💠 UPGRADE SHOP</div>
           <div id="shop-balance">💠 <span id="shop-shard-count">0</span> SHARDS AVAILABLE</div>
-          <button id="shop-close" onclick="closeShop()">✕ CLOSE</button>
+          <button id="shop-close" onclick="event.stopPropagation(); closeShop();">✕ CLOSE</button>
         </div>
         <div id="shop-content"></div>
       </div>
@@ -1358,6 +1358,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const newDeathScreen = document.getElementById('death-screen');
     newDeathScreen.classList.remove('show');
+    newDeathScreen.style.display = 'none'; // Explicitly hide
     
     // Close shop if open
     if(shopOpen){
@@ -1382,11 +1383,18 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   window.openShopFromDeath = function(){
-    console.log('openShopFromDeath called');
+    console.log('=== openShopFromDeath called ===');
+    console.log('Setting shopOpenedFromDeath = true');
+    console.log('Current isDying:', isDying);
+    
     shopOpenedFromDeath = true;
     const deathScreen = document.getElementById('death-screen');
     deathScreen.classList.remove('show');
+    deathScreen.style.display = 'none'; // Explicitly hide
+    
+    console.log('Opening shop...');
     openShop();
+    console.log('Shop opened, shopOpenedFromDeath:', shopOpenedFromDeath);
   };
 
   function playPowerDownSound(){
@@ -1495,15 +1503,43 @@ document.addEventListener('DOMContentLoaded', function() {
   };
   
   window.closeShop = function(){
+    console.log('=== closeShop called ===');
+    console.log('shopOpenedFromDeath:', shopOpenedFromDeath);
+    console.log('isDying:', isDying);
+    
+    const shopModal = document.getElementById('shop-modal');
+    shopModal.classList.remove('open');
     shopOpen = false;
-    document.getElementById('shop-modal').classList.remove('open');
     saveData();
     
-    // If shop was opened from death screen, return to death screen
-    if(shopOpenedFromDeath) {
+    // Check BOTH the flag AND isDying state for maximum reliability
+    if(shopOpenedFromDeath || isDying) {
+      console.log('>> Should return to death screen');
+      
+      // Clear the flag immediately
+      const wasFromDeath = shopOpenedFromDeath;
       shopOpenedFromDeath = false;
-      const deathScreen = document.getElementById('death-screen');
-      deathScreen.classList.add('show');
+      
+      // Force death screen to show after a brief delay
+      setTimeout(() => {
+        console.log('>> Showing death screen now');
+        const deathScreen = document.getElementById('death-screen');
+        deathScreen.style.display = 'flex';
+        deathScreen.style.pointerEvents = 'auto';
+        deathScreen.classList.add('show');
+        
+        // CRITICAL: Disable pointer events briefly to prevent accidental clicks
+        deathScreen.style.pointerEvents = 'none';
+        setTimeout(() => {
+          deathScreen.style.pointerEvents = 'auto';
+          console.log('>> Death screen buttons now clickable');
+        }, 200); // 200ms cooldown
+        
+        console.log('>> Death screen classList:', deathScreen.classList.toString());
+        console.log('>> Death screen display:', deathScreen.style.display);
+      }, 50);
+    } else {
+      console.log('>> Normal shop close (not from death)');
     }
   };
 
@@ -1562,6 +1598,9 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   window.buyUpgrade = function(id){
+    console.log('buyUpgrade called for:', id);
+    console.log('shopOpenedFromDeath before purchase:', shopOpenedFromDeath);
+    
     const item = SHOP.sections.flatMap(s=>s.items).find(i=>i.id===id);
     if(!item) return;
     const lv = upLv(id);
@@ -1578,6 +1617,8 @@ document.addEventListener('DOMContentLoaded', function() {
     renderShop();
     showNotify(`${item.icon} ${item.name.toUpperCase()} UPGRADED!`,'#b24bff');
     addShake(4);
+    
+    console.log('shopOpenedFromDeath after purchase:', shopOpenedFromDeath);
   };
 
   // ── Shard drops ──
