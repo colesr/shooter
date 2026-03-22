@@ -284,8 +284,9 @@
       position:absolute;inset:0;z-index:65;background:rgba(4,1,14,0.96);
       display:none;align-items:center;justify-content:center;flex-direction:column;
       backdrop-filter:blur(12px);animation:deathFadeIn 0.6s ease;
+      pointer-events:auto;
     }
-    #death-screen.show{display:flex;}
+    #death-screen.show{display:flex;pointer-events:auto;}
     @keyframes deathFadeIn{from{opacity:0}to{opacity:1}}
     .death-title{font-family:'Orbitron',monospace;font-size:36px;font-weight:900;
       color:#ff2d78;text-shadow:0 0 40px #ff2d78,0 0 80px rgba(255,45,120,0.4);
@@ -470,12 +471,12 @@
 
     /* ── SLOW-MO DEATH SCREEN (DEPRECATED - using new death-screen instead) ── */
     #death-overlay{
-      position:absolute;inset:0;z-index:60;pointer-events:none;
+      position:absolute;inset:0;z-index:60;pointer-events:none !important;
       display:none;flex-direction:column;align-items:center;justify-content:center;
       opacity:0;background:rgba(4,1,14,0);
     }
     #death-overlay.active{
-      pointer-events:all;
+      /* Remove pointer-events:all since we use death-screen now */
       animation:deathFade 3.2s ease forwards;
     }
     @keyframes deathFade{
@@ -1054,22 +1055,22 @@ document.addEventListener('DOMContentLoaded', function() {
   const SECTORS = [
     { id:0, name:'RESIDENTIAL DISTRICT', sub:'LOW-DENSITY HOUSING ZONE',    color:'#00ffcc', scoreAt:0,
       palette:{ bg:'#04010a', c1:'#00ffcc', c2:'#0088aa', c3:'#004455', bullet:'#aaffee', hud:'#00ffcc' },
-      bldW:[30,60],  bldH:[40,120],  spread:1.0, swayAmt:0,  stormChance:0   },
+      bldW:[30,60],  bldH:[40,120],  spread:0.7, swayAmt:0,  stormChance:0   },
     { id:1, name:'INDUSTRIAL BELT',      sub:'HEAVY MANUFACTURING ZONE',    color:'#ff6600', scoreAt:250,
       palette:{ bg:'#0a0400', c1:'#ff6600', c2:'#cc3300', c3:'#884400', bullet:'#ffcc66', hud:'#ff6600' },
-      bldW:[60,120], bldH:[80,180],  spread:1.2, swayAmt:0,  stormChance:0.3 },
+      bldW:[60,120], bldH:[80,180],  spread:0.8, swayAmt:0,  stormChance:0.3 },
     { id:2, name:'CORPORATE CORE',       sub:'MEGACORP TERRITORY — HOSTILE', color:'#00aaff', scoreAt:500,
       palette:{ bg:'#000a14', c1:'#00aaff', c2:'#0055cc', c3:'#003366', bullet:'#88ccff', hud:'#00aaff' },
-      bldW:[50,100], bldH:[180,380], spread:0.8, swayAmt:8,  stormChance:0.2 },
+      bldW:[50,100], bldH:[180,380], spread:0.55, swayAmt:8,  stormChance:0.2 },
     { id:3, name:'NEON BAZAAR',          sub:'UNREGULATED COMMERCE SECTOR',  color:'#ff00ff', scoreAt:750,
       palette:{ bg:'#08000a', c1:'#ff00ff', c2:'#ff00aa', c3:'#aa00ff', bullet:'#ffaaff', hud:'#ff00ff' },
-      bldW:[35,80],  bldH:[60,250],  spread:1.5, swayAmt:4,  stormChance:0.15},
+      bldW:[35,80],  bldH:[60,250],  spread:1.0, swayAmt:4,  stormChance:0.15},
     { id:4, name:'THE UNDERCITY',        sub:'DEPTH SECTOR — TREAD CAREFULLY',color:'#44ff00',scoreAt:1000,
       palette:{ bg:'#000a00', c1:'#44ff00', c2:'#228800', c3:'#115500', bullet:'#aaff88', hud:'#44ff00' },
-      bldW:[40,90],  bldH:[100,300], spread:1.3, swayAmt:6,  stormChance:0.5 },
+      bldW:[40,90],  bldH:[100,300], spread:0.9, swayAmt:6,  stormChance:0.5 },
     { id:5, name:'GHOST NETWORK',        sub:'CLASSIFIED — ACCESS RESTRICTED',color:'#cc88ff',scoreAt:1500,
       palette:{ bg:'#060010', c1:'#cc88ff', c2:'#8833cc', c3:'#550099', bullet:'#eeccff', hud:'#cc88ff' },
-      bldW:[20,50],  bldH:[50,400],  spread:0.6, swayAmt:12, stormChance:0.4 },
+      bldW:[20,50],  bldH:[50,400],  spread:0.45, swayAmt:12, stormChance:0.4 },
   ];
 
   let currentSector = 0;
@@ -1181,11 +1182,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function tickTraffic(dt){
     carTimer += dt;
-    const rate = Math.max(120, nextCarIn - score*0.3);
+    const rate = Math.max(80, nextCarIn - score*0.4); // Faster spawning: 80 instead of 120, 0.4 instead of 0.3
     if(carTimer >= rate){
       carTimer = 0;
-      nextCarIn = rand(200,500);
-      const n = 1 + Math.floor(currentSector * 0.5);
+      nextCarIn = rand(150,350); // Reduced from 200-500 for more frequent spawns
+      const n = 2 + Math.floor(currentSector * 0.6); // More cars: 2 base instead of 1, 0.6 instead of 0.5
       for(let i=0;i<n;i++) trafficCars.push(new TrafficCar());
     }
     for(let i=trafficCars.length-1;i>=0;i--){
@@ -1374,12 +1375,17 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   window.quickRetry = function(){
+    console.log('quickRetry called');
+    const deathScreen = document.getElementById('death-screen');
+    deathScreen.classList.remove('show');
     restartGame();
   };
 
   window.openShopFromDeath = function(){
-    shopOpenedFromDeath = true; // Mark that shop was opened from death screen
-    document.getElementById('death-screen').classList.remove('show');
+    console.log('openShopFromDeath called');
+    shopOpenedFromDeath = true;
+    const deathScreen = document.getElementById('death-screen');
+    deathScreen.classList.remove('show');
     openShop();
   };
 
@@ -1489,14 +1495,15 @@ document.addEventListener('DOMContentLoaded', function() {
   };
   
   window.closeShop = function(){
-    shopOpen=false;
+    shopOpen = false;
     document.getElementById('shop-modal').classList.remove('open');
     saveData();
     
     // If shop was opened from death screen, return to death screen
-    if(shopOpenedFromDeath && isDying){
-      document.getElementById('death-screen').classList.add('show');
+    if(shopOpenedFromDeath) {
       shopOpenedFromDeath = false;
+      const deathScreen = document.getElementById('death-screen');
+      deathScreen.classList.add('show');
     }
   };
 
@@ -1779,7 +1786,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const bullets     = [];
   const particles   = [];  // includes explosions + camera-rush fragments
   const powerDrops  = [];
-  const NUM_BUILDINGS = 40;
+  const NUM_BUILDINGS = 80; // Doubled from 40 for much denser city
 
   // ─ Building ─
   class Building {
@@ -3177,9 +3184,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const side = Math.random()<0.5?-1:1;
     shootingStars.push({
       x: side<0 ? -0.05 : 1.05,
-      y: 0.05 + Math.random()*0.35,
-      vx: side * (0.0024 + Math.random()*0.0024), // 40% slower: 0.0024-0.0048 instead of 0.004-0.008
-      vy: 0.0006 + Math.random()*0.0012, // 40% slower: 0.0006-0.0018 instead of 0.001-0.003
+      y: 0.3 + Math.random()*0.2, // Start lower in the sky (30-50% down screen)
+      vx: side * (0.0024 + Math.random()*0.0024), // Horizontal speed
+      vy: -0.0015 - Math.random()*0.0010, // Initial upward velocity (negative = up): -0.0015 to -0.0025
+      gravity: 0.00002, // Gentle gravity to create arc
       trail: [],
       alive: true,
       hit: false,
@@ -3206,9 +3214,11 @@ document.addEventListener('DOMContentLoaded', function() {
       s.trail.push({x:s.x,y:s.y});
       if(s.trail.length>50)s.trail.shift(); // Longer trail: 50 points instead of 22
       s.x+=s.vx*dt;
+      s.vy+=s.gravity*dt; // Apply gravity to vertical velocity
       s.y+=s.vy*dt;
       s.sx=s.x*W; s.sy=s.y*H;
-      if(s.x<-0.15||s.x>1.15||s.y>0.75||s.hit)shootingStars.splice(i,1);
+      // Remove if off screen (x or y out of bounds)
+      if(s.x<-0.15||s.x>1.15||s.y<-0.1||s.y>0.9||s.hit)shootingStars.splice(i,1);
     }
   }
 
