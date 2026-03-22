@@ -1224,6 +1224,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // ═══════════════════════════════════════════
   //  GAME FEEL — RECOIL + GHOST TRAIL
   // ═══════════════════════════════════════════
+  let recoilX     = 0; // screen-space nudge applied to crosshair X
   let recoilY     = 0; // screen-space nudge applied to crosshair Y
   let prevMX      = W/2, prevMY = H/2;
   let ghostTrails = []; // [{x,y,age,maxAge}]
@@ -1435,6 +1436,7 @@ document.addEventListener('DOMContentLoaded', function() {
           { id:'wide_lens',  icon:'🔭',  name:'Wide Lens',            desc:'Projectile size +10% per level. Bigger = more forgiving.',  cost:250, maxLevel:3, effect:'projSize',    perLevel:0.10 },
           { id:'overdrive',  icon:'⚡',  name:'Overdrive Core',       desc:'Base bullet speed +12% per level.',                        cost:180, maxLevel:3, effect:'bulletSpeed', perLevel:0.12 },
           { id:'dual_fire',  icon:'🔫',  name:'Dual Fire',            desc:'Every 5th shot fires 2 bullets simultaneously.',           cost:400, maxLevel:1, effect:'dualFire',    perLevel:1    },
+          { id:'auto_gun',   icon:'🔫',  name:'Auto Machine Gun',     desc:'Hold fire to shoot continuously. Full auto mode!',         cost:1000,maxLevel:1, effect:'autoFire',    perLevel:1    },
         ]
       },
       {
@@ -1780,15 +1782,62 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Camera shake
   let shakeAmt = 0, shakeX = 0, shakeY = 0;
+  let shakeDirectionX = 0, shakeDirectionY = 0; // Directional shake
 
   // Glitch state
   let glitchTimer = 0;
 
   // Slowmo
   let timeScale = 1.0;
+  
+  // JUICE SYSTEMS
+  let freezeFrames = 0; // Hit freeze
+  let killSlowdown = 0; // Kill slowdown timer
+  let zoomPunch = 1.0; // Zoom punch effect
+  let targetZoom = 1.0; // Target zoom for smooth transitions
+  let screenFlashColor = null; // Screen flash effect
+  let screenFlashAlpha = 0;
 
   // Overclock hue
   let overclockHue = 0;
+
+  // ═══════════════════════════════════════════
+  //  JUICE SYSTEMS (Old - mostly unused)
+  // ═══════════════════════════════════════════
+  
+  // Muzzle flash
+  let muzzleFlash = 0;
+  
+  // Chromatic aberration
+  let chromaticAberration = 0;
+  
+  // Vignette pulse
+  let vignettePulse = 0;
+  
+  // Combo glow
+  let comboGlow = 0;
+  
+  // Speed lines
+  let speedLines = 0;
+  
+  // Screen distortion
+  let screenRipples = [];
+  
+  // Impact sparks
+  let impactSparks = [];
+  
+  // Damage numbers
+  let damageNumbers = [];
+  
+  // Shell casings
+  let shellCasings = [];
+  
+  // Screen tears/glitches
+  let screenTears = [];
+  
+  // Kill streak
+  let killStreak = 0;
+  let lastKillTime = 0;
 
   // Boss
   let boss = null;
@@ -1817,6 +1866,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function doFire(){
     if(wishModalOpen||isDying)return;
+    
+    // JUICE: Muzzle flash, recoil, shell casings
+    addMuzzleFlash();
+    addRecoil(1);
+    addShellCasing();
+    
     const useTriple=puSpread>0||wishTrinity;
     if(useTriple){
       fireBullet(mX,mY,0);
@@ -2020,11 +2075,13 @@ document.addEventListener('DOMContentLoaded', function() {
           this.hitFlash = 8;
           bossHPF.style.width = (this.hp/this.maxHp*100)+'%';
           addShake(3);
+          addFreezeFrame(1); // JUICE: Brief freeze on boss hit
           spawnExplosion(bx,by,bz,'#00ffff',4);
           if(d.hp <= 0){
             d.alive = false;
             spawnExplosion(bx,by,bz,'#00ffff',12);
             addShake(6);
+            addFreezeFrame(3); // JUICE: Longer freeze on drone destruction
           }
           if(this.hp <= 0) this._die();
           return true;
@@ -2203,11 +2260,13 @@ document.addEventListener('DOMContentLoaded', function() {
           b.hp--;
           this.hitFlash = 5;
           addShake(2);
+          addFreezeFrame(1); // JUICE: Brief freeze on barrier hit
           spawnExplosion(bx,by,bz,'#ff6600',3);
           if(b.hp <= 0){
             this.barriers.splice(i,1);
             spawnExplosion(bx,by,bz,'#ff6600',10);
             addShake(5);
+            addFreezeFrame(2); // JUICE: Freeze on barrier destruction
           }
           return true;
         }
@@ -2219,6 +2278,7 @@ document.addEventListener('DOMContentLoaded', function() {
         this.hitFlash = 10;
         bossHPF.style.width = (this.hp/this.maxHp*100)+'%';
         addShake(4);
+        addFreezeFrame(2); // JUICE: Freeze on main body hit
         spawnExplosion(bx,by,bz,'#ff6600',6);
         if(this.hp <= 0) this._die();
         return true;
@@ -2534,9 +2594,11 @@ document.addEventListener('DOMContentLoaded', function() {
           if(Math.hypot(bsx-segSx, bsy-segSy) < 24){
             seg.hp--; seg.hitFlash = 8;
             addShake(3);
+            addFreezeFrame(1); // JUICE: Brief freeze on segment hit
             if(seg.hp <= 0){
               spawnExplosion(bx,by,bz,'#ff6600',14);
               this.segments.splice(i,1);
+              addFreezeFrame(3); // JUICE: Longer freeze on segment destruction
               showNotify('SEGMENT DESTROYED!','#ff6600');
             }
             return true;
@@ -2553,6 +2615,7 @@ document.addEventListener('DOMContentLoaded', function() {
         this.hitFlash = 10;
         bossHPF.style.width = (this.hp/this.maxHp*100)+'%';
         addShake(4);
+        addFreezeFrame(2); // JUICE: Freeze on main boss hit
         spawnExplosion(bx,by,bz,'#ff2d78',6);
         if(this.hp <= 0) this._die();
         return true;
@@ -2918,9 +2981,20 @@ document.addEventListener('DOMContentLoaded', function() {
           
           if(combo%5===0)triggerGlitch();
           checkMilestone();
-          spawnExplosion(b.x,b.y,b.z,wishChromatic>0?`hsl(${chromaticHue},100%,60%)`:bd.color,18);
+          
+          // JUICE: Enhanced explosion with more layers
+          const explosionColor = wishChromatic>0?`hsl(${chromaticHue},100%,60%)`:bd.color;
+          spawnExplosion(b.x,b.y,b.z,explosionColor,24); // More particles
           spawnCameraFragments(b.x,b.y,b.z,wishChromatic>0?`hsl(${(chromaticHue+90)%360},100%,60%)`:bd.color);
-          addShake(3+bonus);
+          
+          // JUICE: Directional shake toward impact
+          const sc = focal/Math.max(1,b.z);
+          const impactX = W/2 + b.x*sc;
+          const impactY = H/2 + b.y*sc;
+          const dirX = (impactX - W/2) / W * 2; // Normalized -1 to 1
+          const dirY = (impactY - H/2) / H * 2;
+          addShake(4+bonus, dirX, dirY);
+          
           // Shard drop
           const shardCount = 1 + getShardBonus() + (bonus>1?1:0);
           dropShards(b.x,b.y,b.z,shardCount);
@@ -2977,6 +3051,14 @@ document.addEventListener('DOMContentLoaded', function() {
   //  PARTICLES
   // ═══════════════════════════════════════════
   function spawnExplosion(wx,wy,wz,color,n=20){
+    // JUICE: Add impact sparks, ripples, and enhanced particles
+    addImpactSparks(wx,wy,wz,color,12);
+    
+    const sc = focal/Math.max(1,wz);
+    const sx = W/2+wx*sc, sy = H/2+wy*sc;
+    addScreenRipple(sx, sy);
+    
+    // Original particles + rings
     for(let i=0;i<n;i++){
       const ang=Math.random()*Math.PI*2;
       const spd=rand(0.5,4);
@@ -2984,6 +3066,16 @@ document.addEventListener('DOMContentLoaded', function() {
         x:wx,y:wy,z:wz,
         vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd*0.6-rand(0.1,0.6),vz:rand(-1,1.5),
         life:rand(20,45),maxLife:40,color,type:'explosion'
+      });
+    }
+    
+    // JUICE: Add expanding rings
+    for(let i=0;i<3;i++){
+      particles.push({
+        x:wx,y:wy,z:wz,
+        vx:0,vy:0,vz:0,
+        life:20-i*5,maxLife:20,color,type:'ring',
+        radius:0,maxRadius:30+i*15
       });
     }
   }
@@ -3019,12 +3111,26 @@ document.addEventListener('DOMContentLoaded', function() {
       if(p.z<=1)continue;
       const s=focal/p.z;
       const sx=W/2+p.x*s,sy=H/2+p.y*s;
-      const r=Math.max(0.5,p.type==='fragment'?3*s:1.8*s*10);
-      ctx.beginPath();
-      ctx.fillStyle=p.color||'#ffcc66';
-      ctx.globalAlpha=Math.max(0.1,Math.min(1,p.life/p.maxLife));
-      ctx.arc(sx,sy,r,0,Math.PI*2);
-      ctx.fill();
+      
+      // JUICE: Handle different particle types
+      if(p.type === 'ring'){
+        // Expanding ring
+        p.radius += (p.maxRadius - p.radius) * 0.15;
+        ctx.strokeStyle=p.color||'#ffcc66';
+        ctx.globalAlpha=Math.max(0.1,Math.min(1,p.life/p.maxLife));
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(sx,sy,p.radius*s,0,Math.PI*2);
+        ctx.stroke();
+      } else {
+        // Regular particles (explosion, fragment)
+        const r=Math.max(0.5,p.type==='fragment'?3*s:1.8*s*10);
+        ctx.beginPath();
+        ctx.fillStyle=p.color||'#ffcc66';
+        ctx.globalAlpha=Math.max(0.1,Math.min(1,p.life/p.maxLife));
+        ctx.arc(sx,sy,r,0,Math.PI*2);
+        ctx.fill();
+      }
     }
     ctx.globalAlpha=1;
   }
@@ -3062,7 +3168,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if(puSpread>0){puSpread-=dt;if(puSpread<=0){puSpread=0;document.getElementById('pu-spread').classList.remove('active-spread');}}
     if(puOverclock>0){puOverclock-=dt;overclockHue=(overclockHue+4)%360;if(puOverclock<=0){puOverclock=0;overclockHue=0;document.getElementById('pu-overclock').classList.remove('active-overclock');}}
     if(puSlowmo>0){puSlowmo-=dt;if(puSlowmo<=0){puSlowmo=0;document.getElementById('pu-slowmo').classList.remove('active-slowmo');}}
-    // timeScale priority: freeze > slowmo > normal
+    // timeScale priority: freeze > slowmo > normal (killSlowdown disabled)
     if(wishFreeze>0)        timeScale=0.0;
     else if(puSlowmo>0)     timeScale=0.35;
     else                    timeScale=1.0;
@@ -3090,20 +3196,329 @@ document.addEventListener('DOMContentLoaded', function() {
   // ═══════════════════════════════════════════
   //  EFFECTS
   // ═══════════════════════════════════════════
-  function addShake(amt){shakeAmt=Math.max(shakeAmt,amt);}
+  
+  // ── JUICE: Directional Screen Shake ──
+  function addShake(amt, dirX=0, dirY=0){
+    shakeAmt=Math.max(shakeAmt,amt);
+    if(dirX || dirY){
+      shakeDirectionX = dirX;
+      shakeDirectionY = dirY;
+    }
+  }
 
   function updateShake(dt){
     if(shakeAmt>0){
-      shakeX=(Math.random()-0.5)*shakeAmt*2;
-      shakeY=(Math.random()-0.5)*shakeAmt*2;
+      if(shakeDirectionX || shakeDirectionY){
+        // Directional shake
+        shakeX = shakeDirectionX * shakeAmt + (Math.random()-0.5)*shakeAmt*0.5;
+        shakeY = shakeDirectionY * shakeAmt + (Math.random()-0.5)*shakeAmt*0.5;
+      } else {
+        // Random shake
+        shakeX=(Math.random()-0.5)*shakeAmt*2;
+        shakeY=(Math.random()-0.5)*shakeAmt*2;
+      }
       shakeAmt=Math.max(0,shakeAmt-0.8*dt);
+      if(shakeAmt < 0.5){
+        shakeDirectionX = 0;
+        shakeDirectionY = 0;
+      }
     } else {shakeX=0;shakeY=0;}
+  }
+  
+  // ═══════════════════════════════════════════
+  //  JUICE SYSTEMS
+  // ═══════════════════════════════════════════
+  
+  // Hit freeze - brief pause on impact (DISABLED - was causing freeze)
+  function addFreezeFrame(frames = 2){
+    // freezeFrames = Math.max(freezeFrames, frames);
+    // Disabled temporarily
+  }
+  
+  // Kill slowdown - brief time slow on kills (DISABLED)
+  function addKillSlowdown(duration = 15){
+    // killSlowdown = Math.max(killSlowdown, duration);
+    // Disabled - was causing freeze
+  }
+  
+  // Zoom punch - quick zoom effect (DISABLED)
+  function addZoomPunch(amount = 0.05){
+    // targetZoom = 1.0 + amount;
+    // Disabled for stability
+  }
+  
+  // Screen flash - brief color overlay (DISABLED)
+  function addScreenFlash(color, alpha = 0.2){
+    // screenFlashColor = color;
+    // screenFlashAlpha = alpha;
+    // Disabled for stability
+  }
+  
+  // Update juice systems (ALL DISABLED for stability)
+  function updateJuiceSystems(dt){
+    // All juice systems disabled - just return dt unchanged
+    return dt;
+  }
+
+  // ── JUICE: Hit Freeze Frames ──
+  function addFreeze(frames){
+    freezeFrames = Math.max(freezeFrames, frames);
+  }
+
+  // ── JUICE: Muzzle Flash ──
+  function addMuzzleFlash(){
+    muzzleFlash = 8;
+  }
+
+  // ── JUICE: Recoil Kick ──
+  function addRecoil(amount=1){
+    recoilY += amount * 2;
+  }
+
+  function updateRecoil(dt){
+    recoilX *= 0.85;
+    recoilY *= 0.85;
+    if(Math.abs(recoilX)<0.1) recoilX=0;
+    if(Math.abs(recoilY)<0.1) recoilY=0;
+  }
+
+  // ── JUICE: Zoom Punch ──
+  function addZoomPunch(amount=0.03){
+    zoomPunch = Math.max(zoomPunch, amount);
+  }
+
+  function updateZoomPunch(dt){
+    zoomPunch *= 0.9;
+    if(zoomPunch < 0.001) zoomPunch = 0;
+  }
+
+  // ── JUICE: Screen Flash ──
+  function addScreenFlash(color='#ffffff', intensity=0.3){
+    screenFlash = Math.max(screenFlash, intensity);
+    screenFlashColor = color;
+  }
+
+  function updateScreenFlash(dt){
+    screenFlash *= 0.85;
+    if(screenFlash < 0.01) screenFlash = 0;
+  }
+
+  // ── JUICE: Chromatic Aberration ──
+  function addChromaticAberration(amount=3){
+    chromaticAberration = Math.max(chromaticAberration, amount);
+  }
+
+  function updateChromaticAberration(dt){
+    chromaticAberration *= 0.92;
+    if(chromaticAberration < 0.1) chromaticAberration = 0;
+  }
+
+  // ── JUICE: Vignette Pulse ──
+  function addVignettePulse(amount=0.5){
+    vignettePulse = Math.max(vignettePulse, amount);
+  }
+
+  function updateVignettePulse(dt){
+    vignettePulse *= 0.9;
+    if(vignettePulse < 0.01) vignettePulse = 0;
+  }
+
+  // ── JUICE: Combo Glow ──
+  function updateComboGlow(dt){
+    const targetGlow = Math.min(combo / 50, 1.0);
+    comboGlow += (targetGlow - comboGlow) * 0.1;
+  }
+
+  // ── JUICE: Speed Lines ──
+  function updateSpeedLines(dt){
+    if(puOverclock > 0 || wishFreeze > 0){
+      speedLines = Math.min(speedLines + 0.1, 1.0);
+    } else {
+      speedLines *= 0.9;
+      if(speedLines < 0.01) speedLines = 0;
+    }
+  }
+
+  // ── JUICE: Impact Sparks ──
+  function addImpactSparks(x, y, z, color, count=8){
+    const sc = focal/Math.max(1,z);
+    const sx = W/2+x*sc, sy = H/2+y*sc;
+    for(let i=0;i<count;i++){
+      const angle = (Math.PI*2/count)*i + Math.random()*0.5;
+      const speed = 2 + Math.random()*4;
+      impactSparks.push({
+        x:sx, y:sy,
+        vx:Math.cos(angle)*speed,
+        vy:Math.sin(angle)*speed,
+        color, life:15, maxLife:15,
+        size:2+Math.random()*2
+      });
+    }
+  }
+
+  function updateImpactSparks(dt){
+    for(let i=impactSparks.length-1;i>=0;i--){
+      const s = impactSparks[i];
+      s.x += s.vx * dt;
+      s.y += s.vy * dt;
+      s.vy += 0.3 * dt; // Gravity
+      s.vx *= 0.98;
+      s.life -= dt;
+      if(s.life <= 0) impactSparks.splice(i,1);
+    }
+  }
+
+  function drawImpactSparks(){
+    impactSparks.forEach(s=>{
+      const alpha = s.life/s.maxLife;
+      ctx.fillStyle = s.color.replace(')',`,${alpha})`).replace('rgb','rgba');
+      ctx.fillRect(s.x-s.size/2, s.y-s.size/2, s.size, s.size);
+    });
+  }
+
+  // ── JUICE: Damage Numbers ──
+  function addDamageNumber(x, y, z, damage, isCrit=false){
+    const sc = focal/Math.max(1,z);
+    const sx = W/2+x*sc, sy = H/2+y*sc;
+    damageNumbers.push({
+      x:sx, y:sy,
+      damage, isCrit,
+      life:40, maxLife:40,
+      vy:-2
+    });
+  }
+
+  function updateDamageNumbers(dt){
+    for(let i=damageNumbers.length-1;i>=0;i--){
+      const n = damageNumbers[i];
+      n.y += n.vy * dt;
+      n.vy *= 0.96;
+      n.life -= dt;
+      if(n.life <= 0) damageNumbers.splice(i,1);
+    }
+  }
+
+  function drawDamageNumbers(){
+    ctx.save();
+    damageNumbers.forEach(n=>{
+      const alpha = Math.min(1, n.life/n.maxLife);
+      const scale = n.isCrit ? 1.5 : 1.0;
+      const color = n.isCrit ? '#ffff00' : '#ffffff';
+      ctx.font = `${Math.floor(12*scale)}px 'Share Tech Mono', monospace`;
+      ctx.fillStyle = color.replace(')',`,${alpha})`).replace('rgb','rgba');
+      ctx.textAlign = 'center';
+      ctx.fillText(n.damage.toString(), n.x, n.y);
+    });
+    ctx.restore();
+  }
+
+  // ── JUICE: Shell Casings ──
+  function addShellCasing(){
+    shellCasings.push({
+      x:mX+10, y:mY,
+      vx:2+Math.random()*2,
+      vy:-1-Math.random()*2,
+      rotation:Math.random()*Math.PI*2,
+      rotSpeed:0.2+Math.random()*0.3,
+      life:30, maxLife:30
+    });
+  }
+
+  function updateShellCasings(dt){
+    for(let i=shellCasings.length-1;i>=0;i--){
+      const c = shellCasings[i];
+      c.x += c.vx * dt;
+      c.y += c.vy * dt;
+      c.vy += 0.4 * dt; // Gravity
+      c.rotation += c.rotSpeed * dt;
+      c.vx *= 0.98;
+      c.life -= dt;
+      if(c.life <= 0) shellCasings.splice(i,1);
+    }
+  }
+
+  function drawShellCasings(){
+    ctx.save();
+    shellCasings.forEach(c=>{
+      const alpha = c.life/c.maxLife * 0.6;
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate(c.rotation);
+      ctx.fillStyle = `rgba(255,200,100,${alpha})`;
+      ctx.fillRect(-2, -1, 4, 2);
+      ctx.restore();
+    });
+    ctx.restore();
+  }
+
+  // ── JUICE: Screen Ripples ──
+  function addScreenRipple(x, y){
+    screenRipples.push({x, y, radius:0, maxRadius:150, life:30, maxLife:30});
+  }
+
+  function updateScreenRipples(dt){
+    for(let i=screenRipples.length-1;i>=0;i--){
+      const r = screenRipples[i];
+      r.radius += (r.maxRadius/r.maxLife) * dt * 2;
+      r.life -= dt;
+      if(r.life <= 0) screenRipples.splice(i,1);
+    }
+  }
+
+  function drawScreenRipples(){
+    ctx.save();
+    screenRipples.forEach(r=>{
+      const alpha = r.life/r.maxLife * 0.3;
+      ctx.strokeStyle = `rgba(0,255,255,${alpha})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.radius, 0, Math.PI*2);
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+
+  // ── JUICE: Screen Tears/Glitches ──
+  function addScreenTear(){
+    screenTears.push({
+      y:Math.random()*H,
+      offset:Math.random()*20-10,
+      life:8
+    });
+  }
+
+  function updateScreenTears(dt){
+    for(let i=screenTears.length-1;i>=0;i--){
+      screenTears[i].life -= dt;
+      if(screenTears[i].life <= 0) screenTears.splice(i,1);
+    }
+  }
+
+  // ── JUICE: Kill Streak ──
+  function updateKillStreak(){
+    const now = Date.now();
+    if(now - lastKillTime > 2000){ // 2 second window
+      killStreak = 0;
+    }
+  }
+
+  function addKill(){
+    lastKillTime = Date.now();
+    killStreak++;
+    
+    // Kill streak bonuses (juice removed)
+    if(killStreak >= 10){
+      addChromaticAberration(5);
+      timeScale = 0.5;
+      setTimeout(()=>timeScale=1.0, 200);
+    }
   }
 
   function triggerGlitch(){
     glitch.classList.remove('active');
     void glitch.offsetWidth;
     glitch.classList.add('active');
+    addScreenTear();
   }
 
   // ─ Milestone notify ─
@@ -3531,7 +3946,8 @@ document.addEventListener('DOMContentLoaded', function() {
   //  RAPID FIRE (overclock)
   // ═══════════════════════════════════════════
   function tickRapidFire(dt){
-    if(puOverclock>0&&fireHeld){
+    // Auto fire: overclock powerup OR auto machine gun upgrade
+    if((puOverclock>0 || upLv('auto_gun')>0) && fireHeld){
       fireTimer+=dt;
       const threshold=getFireRateDiv();
       if(fireTimer>=threshold){fireTimer=0;doFire();}
@@ -3548,6 +3964,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const raw=(now-last)/16.67;
     last=now;
     const dt=Math.min(raw,3);
+    
+    // JUICE systems completely removed
+    
     tick++;
     
     // Track survival time (frames alive)
@@ -3573,6 +3992,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ── Draw ──
     ctx.save();
+    
     // Death zoom: scale from center
     if(deathZoom > 1.0){
       ctx.translate(W/2, H/2);
