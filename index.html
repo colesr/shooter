@@ -1322,7 +1322,12 @@ document.addEventListener('DOMContentLoaded', function() {
       // Show shards earned this run
       document.getElementById('death-shards-earned').innerHTML = `💠 +${shards.toLocaleString()} SHARDS EARNED`;
       
+      // Ensure death screen is visible and interactive (critical for iframe)
+      deathScreen.style.display = 'flex';
+      deathScreen.style.pointerEvents = 'auto';
       deathScreen.classList.add('show');
+      
+      console.log('Death screen shown - buttons should be clickable');
     }, 600);
     
     saveData(); 
@@ -1360,7 +1365,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const newDeathScreen = document.getElementById('death-screen');
     newDeathScreen.classList.remove('show');
-    newDeathScreen.style.display = 'none'; // Explicitly hide
+    newDeathScreen.style.display = 'none';
+    newDeathScreen.style.pointerEvents = 'none';
+    
+    console.log('Game restarted - all death screens hidden');
     
     // Close shop if open
     if(shopOpen){
@@ -1378,9 +1386,12 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   window.quickRetry = function(){
-    console.log('quickRetry called');
+    console.log('=== quickRetry called ===');
     const deathScreen = document.getElementById('death-screen');
     deathScreen.classList.remove('show');
+    deathScreen.style.display = 'none'; // Explicitly hide
+    deathScreen.style.pointerEvents = 'none';
+    console.log('Death screen hidden, restarting game...');
     restartGame();
   };
 
@@ -1436,7 +1447,7 @@ document.addEventListener('DOMContentLoaded', function() {
           { id:'wide_lens',  icon:'🔭',  name:'Wide Lens',            desc:'Projectile size +10% per level. Bigger = more forgiving.',  cost:250, maxLevel:3, effect:'projSize',    perLevel:0.10 },
           { id:'overdrive',  icon:'⚡',  name:'Overdrive Core',       desc:'Base bullet speed +12% per level.',                        cost:180, maxLevel:3, effect:'bulletSpeed', perLevel:0.12 },
           { id:'dual_fire',  icon:'🔫',  name:'Dual Fire',            desc:'Every 5th shot fires 2 bullets simultaneously.',           cost:400, maxLevel:1, effect:'dualFire',    perLevel:1    },
-          { id:'auto_gun',   icon:'🔫',  name:'Auto Machine Gun',     desc:'Hold fire to shoot continuously. Full auto mode!',         cost:1000,maxLevel:1, effect:'autoFire',    perLevel:1    },
+          { id:'auto_gun',   icon:'🔫',  name:'Auto Machine Gun',     desc:'Hold fire to shoot continuously. Full auto mode!',         cost:50000,maxLevel:1, effect:'autoFire',    perLevel:1    },
         ]
       },
       {
