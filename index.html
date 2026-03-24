@@ -1434,6 +1434,57 @@ document.addEventListener('DOMContentLoaded', function() {
       noise.start(now);
     }catch(e){}
   }
+  // ── Gunfire sound ──
+  let gunAudioCtx=null;
+  let gunNoiseBuffer=null;
+  function initGunAudio(){
+    if(gunAudioCtx)return;
+    gunAudioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    // Pre-generate noise buffer for gunshot crack
+    const rate=gunAudioCtx.sampleRate;
+    const len=rate*0.15|0;
+    gunNoiseBuffer=gunAudioCtx.createBuffer(1,len,rate);
+    const data=gunNoiseBuffer.getChannelData(0);
+    for(let i=0;i<len;i++) data[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);
+  }
+  function playGunfireSound(){
+    try{
+      if(!gunAudioCtx)initGunAudio();
+      if(gunAudioCtx.state==='suspended')gunAudioCtx.resume();
+      const ac=gunAudioCtx;
+      const now=ac.currentTime;
+      // Layer 1: Noise burst (crack/snap)
+      const noise=ac.createBufferSource();
+      noise.buffer=gunNoiseBuffer;
+      const nGain=ac.createGain();
+      nGain.gain.setValueAtTime(0.35,now);
+      nGain.gain.exponentialRampToValueAtTime(0.001,now+0.08);
+      const hpf=ac.createBiquadFilter();
+      hpf.type='highpass';hpf.frequency.value=1800;
+      noise.connect(hpf);hpf.connect(nGain);nGain.connect(ac.destination);
+      noise.start(now);noise.stop(now+0.1);
+      // Layer 2: Low thump (body)
+      const osc=ac.createOscillator();
+      const oGain=ac.createGain();
+      osc.type='sine';
+      osc.frequency.setValueAtTime(150,now);
+      osc.frequency.exponentialRampToValueAtTime(40,now+0.07);
+      oGain.gain.setValueAtTime(0.4,now);
+      oGain.gain.exponentialRampToValueAtTime(0.001,now+0.08);
+      osc.connect(oGain);oGain.connect(ac.destination);
+      osc.start(now);osc.stop(now+0.1);
+      // Layer 3: Mid-range punch
+      const osc2=ac.createOscillator();
+      const oGain2=ac.createGain();
+      osc2.type='square';
+      osc2.frequency.setValueAtTime(600,now);
+      osc2.frequency.exponentialRampToValueAtTime(100,now+0.05);
+      oGain2.gain.setValueAtTime(0.12,now);
+      oGain2.gain.exponentialRampToValueAtTime(0.001,now+0.06);
+      osc2.connect(oGain2);oGain2.connect(ac.destination);
+      osc2.start(now);osc2.stop(now+0.08);
+    }catch(e){}
+  }
 
   // ═══════════════════════════════════════════
   //  UPGRADE SHOP CATALOG
@@ -1882,7 +1933,10 @@ document.addEventListener('DOMContentLoaded', function() {
     addMuzzleFlash();
     addRecoil(1);
     addShellCasing();
-    
+    addShellCasing();
+    playGunfireSound();
+
+	
     const useTriple=puSpread>0||wishTrinity;
     if(useTriple){
       fireBullet(mX,mY,0);
