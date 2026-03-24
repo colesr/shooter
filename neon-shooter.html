@@ -1438,6 +1438,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // ── Gunfire sound ──
   let gunAudioCtx=null;
   let gunNoiseBuffer=null;
+  let lastGunSoundTime=0;
+  const GUN_SOUND_MIN_INTERVAL=50; // ms between sounds to prevent audio overload
   function initGunAudio(){
     if(gunAudioCtx)return;
     gunAudioCtx=new(window.AudioContext||window.webkitAudioContext)();
@@ -1450,37 +1452,43 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   function playGunfireSound(){
     try{
+      const now_ms=performance.now();
+      if(now_ms-lastGunSoundTime<GUN_SOUND_MIN_INTERVAL)return;
+      lastGunSoundTime=now_ms;
       if(!gunAudioCtx)initGunAudio();
       if(gunAudioCtx.state==='suspended')gunAudioCtx.resume();
       const ac=gunAudioCtx;
       const now=ac.currentTime;
+      // Detect if auto-firing for lighter sound
+      const isAuto=(puOverclock>0||upLv('auto_gun')>0)&&fireHeld;
+      const vol=isAuto?0.6:1.0;
       // Layer 1: Noise burst (crack/snap)
       const noise=ac.createBufferSource();
       noise.buffer=gunNoiseBuffer;
       const nGain=ac.createGain();
-      nGain.gain.setValueAtTime(0.35,now);
+      nGain.gain.setValueAtTime(0.35*vol,now);
       nGain.gain.exponentialRampToValueAtTime(0.001,now+0.08);
       const hpf=ac.createBiquadFilter();
-      hpf.type='highpass';hpf.frequency.value=1800;
+      hpf.type='highpass';hpf.frequency.value=isAuto?2200:1800;
       noise.connect(hpf);hpf.connect(nGain);nGain.connect(ac.destination);
       noise.start(now);noise.stop(now+0.1);
       // Layer 2: Low thump (body)
       const osc=ac.createOscillator();
       const oGain=ac.createGain();
       osc.type='sine';
-      osc.frequency.setValueAtTime(150,now);
-      osc.frequency.exponentialRampToValueAtTime(40,now+0.07);
-      oGain.gain.setValueAtTime(0.4,now);
-      oGain.gain.exponentialRampToValueAtTime(0.001,now+0.08);
+      osc.frequency.setValueAtTime(isAuto?180:150,now);
+      osc.frequency.exponentialRampToValueAtTime(40,now+(isAuto?0.05:0.07));
+      oGain.gain.setValueAtTime(0.4*vol,now);
+      oGain.gain.exponentialRampToValueAtTime(0.001,now+(isAuto?0.05:0.08));
       osc.connect(oGain);oGain.connect(ac.destination);
       osc.start(now);osc.stop(now+0.1);
       // Layer 3: Mid-range punch
       const osc2=ac.createOscillator();
       const oGain2=ac.createGain();
       osc2.type='square';
-      osc2.frequency.setValueAtTime(600,now);
+      osc2.frequency.setValueAtTime(isAuto?800:600,now);
       osc2.frequency.exponentialRampToValueAtTime(100,now+0.05);
-      oGain2.gain.setValueAtTime(0.12,now);
+      oGain2.gain.setValueAtTime(0.12*vol,now);
       oGain2.gain.exponentialRampToValueAtTime(0.001,now+0.06);
       osc2.connect(oGain2);oGain2.connect(ac.destination);
       osc2.start(now);osc2.stop(now+0.08);
