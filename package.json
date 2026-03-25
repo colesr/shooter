@@ -1,0 +1,11 @@
+{
+  "name": "neon-district-shooter",
+  "version": "1.0.0",
+  "description": "NEON DISTRICT SHOOTER // 2157 - A cyberpunk arcade shooter",
+  "private": true,
+  "scripts": {
+    "serve": "npx firebase-tools serve --only hosting --port 5000",
+    "deploy": "npx firebase-tools deploy --only hosting",
+    "dev": "npx serve . -l 3000"
+  }
+}
