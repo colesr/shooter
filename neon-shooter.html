@@ -1048,14 +1048,14 @@ document.addEventListener('DOMContentLoaded', function() {
   let puSpread    = 0;
   let puOverclock = 0;
   let puSlowmo    = 0;
-  let puFairyKiss = 0;          // 7-barrel timer (frames)
+  let puFairyKiss = 0;
   const PU_DURATION = 300;
-  const FAIRY_KISS_DURATION = 30*60; // 30 seconds at 60fps
+  const FAIRY_KISS_DURATION = 30*60;
 
   // ── Fairy Girl ──
   let fairy = null;
-  let fairyTimer = 60*60;       // first appearance after 60s
-  let fairyHearts = [];         // floating heart particles
+  let fairyTimer = 60*60;
+  let fairyHearts = [];
 
   // ═══════════════════════════════════════════
   //  SECTOR SYSTEM
@@ -1447,10 +1447,11 @@ document.addEventListener('DOMContentLoaded', function() {
   let gunAudioCtx=null;
   let gunNoiseBuffer=null;
   let lastGunSoundTime=0;
-  const GUN_SOUND_MIN_INTERVAL=50;
+  const GUN_SOUND_MIN_INTERVAL=50; // ms between sounds to prevent audio overload
   function initGunAudio(){
     if(gunAudioCtx)return;
     gunAudioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    // Pre-generate noise buffer for gunshot crack
     const rate=gunAudioCtx.sampleRate;
     const len=rate*0.15|0;
     gunNoiseBuffer=gunAudioCtx.createBuffer(1,len,rate);
@@ -1466,6 +1467,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if(gunAudioCtx.state==='suspended')gunAudioCtx.resume();
       const ac=gunAudioCtx;
       const now=ac.currentTime;
+      // Detect if auto-firing for lighter sound
       const isAuto=(puOverclock>0||upLv('auto_gun')>0)&&fireHeld;
       const vol=isAuto?0.6:1.0;
       // Layer 1: Noise burst (crack/snap)
@@ -1944,14 +1946,13 @@ document.addEventListener('DOMContentLoaded', function() {
   function doFire(){
     if(wishModalOpen||isDying)return;
     
-    // JUICE: Muzzle flash, recoil, shell casings
+    // JUICE: Muzzle flash, recoil, shell casings, gunfire sound
     addMuzzleFlash();
     addRecoil(1);
     addShellCasing();
     playGunfireSound();
-
+    
     if(puFairyKiss>0){
-      // 7-barrel fan
       const angles=[-0.18,-0.12,-0.06,0,0.06,0.12,0.18];
       for(const a of angles) fireBullet(mX,mY,a);
     } else {
@@ -4031,16 +4032,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // ═══════════════════════════════════════════
   function spawnFairy(){
     fairy={
-      x: -80,                     // start off-screen left
-      y: H*0.25+Math.random()*H*0.2,
-      targetX: W*0.5,             // fly to center
-      targetY: H*0.35,
-      phase: 'enter',             // enter → kiss → exit
-      t: 0,
-      wingPhase: 0,
-      sparkles: [],
-      kissT: 0,
-      glowHue: 0,
+      x: -80, y: H*0.25+Math.random()*H*0.2,
+      targetX: W*0.5, targetY: H*0.35,
+      phase: 'enter', t: 0, wingPhase: 0, sparkles: [], kissT: 0, glowHue: 0,
     };
   }
 
@@ -4049,264 +4043,126 @@ document.addEventListener('DOMContentLoaded', function() {
       if(!gunAudioCtx) initGunAudio();
       if(gunAudioCtx.state==='suspended') gunAudioCtx.resume();
       const ac=gunAudioCtx, now=ac.currentTime;
-      // Sparkly kiss: a quick sine chirp + shimmer
-      const o=ac.createOscillator();
-      const g=ac.createGain();
-      o.type='sine';
-      o.frequency.setValueAtTime(800,now);
+      const o=ac.createOscillator();const g=ac.createGain();
+      o.type='sine';o.frequency.setValueAtTime(800,now);
       o.frequency.exponentialRampToValueAtTime(1600,now+0.08);
       o.frequency.exponentialRampToValueAtTime(600,now+0.25);
-      g.gain.setValueAtTime(0.2,now);
-      g.gain.exponentialRampToValueAtTime(0.001,now+0.3);
-      o.connect(g);g.connect(ac.destination);
-      o.start(now);o.stop(now+0.35);
-      // Shimmer layer
-      const o2=ac.createOscillator();
-      const g2=ac.createGain();
-      o2.type='triangle';
-      o2.frequency.setValueAtTime(1200,now+0.05);
+      g.gain.setValueAtTime(0.2,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.3);
+      o.connect(g);g.connect(ac.destination);o.start(now);o.stop(now+0.35);
+      const o2=ac.createOscillator();const g2=ac.createGain();
+      o2.type='triangle';o2.frequency.setValueAtTime(1200,now+0.05);
       o2.frequency.exponentialRampToValueAtTime(2400,now+0.15);
-      g2.gain.setValueAtTime(0.1,now+0.05);
-      g2.gain.exponentialRampToValueAtTime(0.001,now+0.25);
-      o2.connect(g2);g2.connect(ac.destination);
-      o2.start(now+0.05);o2.stop(now+0.3);
+      g2.gain.setValueAtTime(0.1,now+0.05);g2.gain.exponentialRampToValueAtTime(0.001,now+0.25);
+      o2.connect(g2);g2.connect(ac.destination);o2.start(now+0.05);o2.stop(now+0.3);
     }catch(e){}
   }
 
   function tickFairy(dt){
     if(!fairy && !isDying){
       fairyTimer-=dt;
-      if(fairyTimer<=0){
-        fairyTimer=60*60; // next one in 60s
-        spawnFairy();
-      }
+      if(fairyTimer<=0){ fairyTimer=60*60; spawnFairy(); }
     }
     if(!fairy) return;
     const f=fairy;
-    f.t+=dt;
-    f.wingPhase+=0.15*dt;
-    f.glowHue=(f.glowHue+2*dt)%360;
+    f.t+=dt; f.wingPhase+=0.15*dt; f.glowHue=(f.glowHue+2*dt)%360;
 
     if(f.phase==='enter'){
-      // Glide toward target
       f.x+=(f.targetX-f.x)*0.02*dt;
       f.y+=(f.targetY-f.y)*0.02*dt + Math.sin(f.t*0.05)*0.3;
-      // Add sparkle trail
-      if(Math.random()<0.3*dt){
+      if(Math.random()<0.3*dt)
         f.sparkles.push({x:f.x+rand(-10,10),y:f.y+rand(-5,15),life:1,vx:rand(-0.5,0.5),vy:rand(-1,-0.3),size:rand(1.5,3.5)});
-      }
-      // Arrived?
-      if(Math.abs(f.x-f.targetX)<30 && f.t>60){
-        f.phase='kiss';
-        f.kissT=0;
-      }
+      if(Math.abs(f.x-f.targetX)<30 && f.t>60){ f.phase='kiss'; f.kissT=0; }
     }
     else if(f.phase==='kiss'){
-      f.kissT+=dt;
-      f.y+=Math.sin(f.t*0.06)*0.4; // gentle hover
-      // Spawn the kiss heart at the right moment
+      f.kissT+=dt; f.y+=Math.sin(f.t*0.06)*0.4;
       if(f.kissT>30 && f.kissT<34){
         playKissSound();
-        // Activate 7-barrel!
         puFairyKiss=FAIRY_KISS_DURATION;
         showNotify('💋 FAIRY KISS! 7-BARREL MODE!','#ff69b4');
-        // Burst of hearts
         for(let i=0;i<12;i++){
           const angle=Math.PI*2*i/12;
-          fairyHearts.push({
-            x:f.x, y:f.y,
-            vx:Math.cos(angle)*rand(1,3), vy:Math.sin(angle)*rand(1,3)-1,
-            life:1, size:rand(10,20), hue:rand(320,360)
-          });
+          fairyHearts.push({x:f.x,y:f.y,vx:Math.cos(angle)*rand(1,3),vy:Math.sin(angle)*rand(1,3)-1,life:1,size:rand(10,20),hue:rand(320,360)});
         }
-        f.phase='exit';
-        f.t=0;
+        f.phase='exit'; f.t=0;
       }
     }
     else if(f.phase==='exit'){
-      // Float away to the right
-      f.x+=2.5*dt;
-      f.y-=0.5*dt;
-      f.y+=Math.sin(f.t*0.08)*0.5;
-      if(Math.random()<0.2*dt){
+      f.x+=2.5*dt; f.y-=0.5*dt; f.y+=Math.sin(f.t*0.08)*0.5;
+      if(Math.random()<0.2*dt)
         f.sparkles.push({x:f.x+rand(-10,10),y:f.y+rand(-5,15),life:1,vx:rand(-0.5,0.5),vy:rand(-1,-0.3),size:rand(1.5,3.5)});
-      }
       if(f.x>W+100) fairy=null;
     }
-
-    // Update sparkles
     for(let i=f.sparkles.length-1;i>=0;i--){
-      const s=f.sparkles[i];
-      s.x+=s.vx*dt; s.y+=s.vy*dt;
-      s.life-=0.015*dt;
+      const s=f.sparkles[i]; s.x+=s.vx*dt; s.y+=s.vy*dt; s.life-=0.015*dt;
       if(s.life<=0) f.sparkles.splice(i,1);
     }
-
-    // Update hearts
     for(let i=fairyHearts.length-1;i>=0;i--){
-      const h=fairyHearts[i];
-      h.x+=h.vx*dt; h.y+=h.vy*dt;
-      h.vy-=0.02*dt; // float up
-      h.life-=0.008*dt;
+      const h=fairyHearts[i]; h.x+=h.vx*dt; h.y+=h.vy*dt; h.vy-=0.02*dt; h.life-=0.008*dt;
       if(h.life<=0) fairyHearts.splice(i,1);
     }
-
-    // Tick fairy kiss powerup
-    if(puFairyKiss>0){
-      puFairyKiss-=dt;
-      if(puFairyKiss<=0) puFairyKiss=0;
-    }
+    if(puFairyKiss>0){ puFairyKiss-=dt; if(puFairyKiss<=0) puFairyKiss=0; }
   }
 
   function drawFairy(){
-    // Draw hearts first (behind fairy)
     for(const h of fairyHearts){
-      ctx.save();
-      ctx.globalAlpha=h.life*0.9;
-      ctx.font=`${h.size}px serif`;
-      ctx.fillText('💖',h.x-h.size/2,h.y);
-      ctx.restore();
+      ctx.save(); ctx.globalAlpha=h.life*0.9; ctx.font=`${h.size}px serif`;
+      ctx.fillText('💖',h.x-h.size/2,h.y); ctx.restore();
     }
-
-    if(!fairy) return;
-    const f=fairy;
-    const cx=f.x, cy=f.y;
-
-    // Glow aura
+    if(!fairy) {
+      if(puFairyKiss>0){
+        ctx.save();
+        const alpha=0.08+0.04*Math.sin(puFairyKiss*0.05);
+        const g=ctx.createRadialGradient(W/2,H/2,W*0.3,W/2,H/2,W*0.7);
+        g.addColorStop(0,'transparent');g.addColorStop(1,`rgba(255,105,180,${alpha})`);
+        ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.restore();
+      }
+      return;
+    }
+    const f=fairy, cx=f.x, cy=f.y;
     ctx.save();
     const grd=ctx.createRadialGradient(cx,cy,5,cx,cy,60);
     grd.addColorStop(0,`hsla(${f.glowHue},100%,85%,0.3)`);
     grd.addColorStop(0.5,`hsla(${(f.glowHue+40)%360},100%,75%,0.12)`);
     grd.addColorStop(1,'transparent');
-    ctx.fillStyle=grd;
-    ctx.fillRect(cx-60,cy-60,120,120);
-    ctx.restore();
-
-    // Sparkle trail
+    ctx.fillStyle=grd;ctx.fillRect(cx-60,cy-60,120,120);ctx.restore();
     for(const s of f.sparkles){
-      ctx.save();
-      ctx.globalAlpha=s.life*0.8;
-      const hue=(f.glowHue+s.x*0.5)%360;
-      ctx.fillStyle=`hsl(${hue},100%,85%)`;
-      ctx.beginPath();
-      ctx.arc(s.x,s.y,s.size,0,Math.PI*2);
-      ctx.fill();
-      ctx.restore();
+      ctx.save();ctx.globalAlpha=s.life*0.8;
+      ctx.fillStyle=`hsl(${(f.glowHue+s.x*0.5)%360},100%,85%)`;
+      ctx.beginPath();ctx.arc(s.x,s.y,s.size,0,Math.PI*2);ctx.fill();ctx.restore();
     }
-
-    ctx.save();
-    ctx.translate(cx,cy);
-
-    // Wings (drawn behind body)
+    ctx.save();ctx.translate(cx,cy);
     const wingFlap=Math.sin(f.wingPhase)*0.4;
-    // Left wing
-    ctx.save();
-    ctx.scale(-1,1);
-    drawWing(wingFlap,f.glowHue);
-    ctx.restore();
-    // Right wing
+    ctx.save();ctx.scale(-1,1);drawWing(wingFlap,f.glowHue);ctx.restore();
     drawWing(wingFlap,(f.glowHue+60)%360);
-
-    // Body - a delicate silhouette
-    // Dress / body
     const bodyGrad=ctx.createLinearGradient(0,-18,0,20);
-    bodyGrad.addColorStop(0,'#ffb7d5');
-    bodyGrad.addColorStop(0.5,'#ff69b4');
-    bodyGrad.addColorStop(1,'#da70d6');
-    ctx.fillStyle=bodyGrad;
-    ctx.beginPath();
-    ctx.ellipse(0,4,7,16,0,0,Math.PI*2);
-    ctx.fill();
-
-    // Head
-    ctx.fillStyle='#ffe4e1';
-    ctx.beginPath();
-    ctx.arc(0,-18,8,0,Math.PI*2);
-    ctx.fill();
-
-    // Hair
-    ctx.fillStyle='#daa0f6';
-    ctx.beginPath();
-    ctx.arc(0,-21,8,Math.PI,Math.PI*2);
-    ctx.fill();
-    // Flowing hair strands
-    ctx.strokeStyle='#daa0f6';
-    ctx.lineWidth=2;
-    ctx.beginPath();
-    ctx.moveTo(-6,-16);
-    ctx.quadraticCurveTo(-12,-5+Math.sin(f.t*0.04)*3,-10,8);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(6,-16);
-    ctx.quadraticCurveTo(12,-5+Math.sin(f.t*0.04+1)*3,10,8);
-    ctx.stroke();
-
-    // Eyes (sparkly)
-    ctx.fillStyle='#4a0040';
-    ctx.beginPath();
-    ctx.arc(-3,-19,1.5,0,Math.PI*2);
-    ctx.arc(3,-19,1.5,0,Math.PI*2);
-    ctx.fill();
-    // Eye sparkle
-    ctx.fillStyle='#fff';
-    ctx.beginPath();
-    ctx.arc(-2.5,-19.5,0.7,0,Math.PI*2);
-    ctx.arc(3.5,-19.5,0.7,0,Math.PI*2);
-    ctx.fill();
-
-    // Blowing kiss animation
+    bodyGrad.addColorStop(0,'#ffb7d5');bodyGrad.addColorStop(0.5,'#ff69b4');bodyGrad.addColorStop(1,'#da70d6');
+    ctx.fillStyle=bodyGrad;ctx.beginPath();ctx.ellipse(0,4,7,16,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ffe4e1';ctx.beginPath();ctx.arc(0,-18,8,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#daa0f6';ctx.beginPath();ctx.arc(0,-21,8,Math.PI,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#daa0f6';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(-6,-16);ctx.quadraticCurveTo(-12,-5+Math.sin(f.t*0.04)*3,-10,8);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(6,-16);ctx.quadraticCurveTo(12,-5+Math.sin(f.t*0.04+1)*3,10,8);ctx.stroke();
+    ctx.fillStyle='#4a0040';ctx.beginPath();ctx.arc(-3,-19,1.5,0,Math.PI*2);ctx.arc(3,-19,1.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-2.5,-19.5,0.7,0,Math.PI*2);ctx.arc(3.5,-19.5,0.7,0,Math.PI*2);ctx.fill();
     if(f.phase==='kiss' && f.kissT>10){
-      ctx.fillStyle='#ff1493';
-      const kx=8+Math.min(f.kissT-10,20)*0.8;
-      const ky=-18-Math.min(f.kissT-10,20)*0.3;
-      ctx.font='14px serif';
-      ctx.globalAlpha=Math.max(0,1-(f.kissT-10)/25);
-      ctx.fillText('💋',kx,ky);
-      ctx.globalAlpha=1;
+      ctx.fillStyle='#ff1493';const kx=8+Math.min(f.kissT-10,20)*0.8;const ky=-18-Math.min(f.kissT-10,20)*0.3;
+      ctx.font='14px serif';ctx.globalAlpha=Math.max(0,1-(f.kissT-10)/25);ctx.fillText('💋',kx,ky);ctx.globalAlpha=1;
     }
-
-    // Smile
-    ctx.strokeStyle='#ff69b4';
-    ctx.lineWidth=1;
-    ctx.beginPath();
-    ctx.arc(0,-16,3,0.1*Math.PI,0.9*Math.PI);
-    ctx.stroke();
-
+    ctx.strokeStyle='#ff69b4';ctx.lineWidth=1;ctx.beginPath();ctx.arc(0,-16,3,0.1*Math.PI,0.9*Math.PI);ctx.stroke();
     ctx.restore();
-
-    // Fairy kiss active indicator - screen edge glow
     if(puFairyKiss>0){
-      ctx.save();
-      const alpha=0.08+0.04*Math.sin(puFairyKiss*0.05);
+      ctx.save();const alpha=0.08+0.04*Math.sin(puFairyKiss*0.05);
       const g=ctx.createRadialGradient(W/2,H/2,W*0.3,W/2,H/2,W*0.7);
-      g.addColorStop(0,'transparent');
-      g.addColorStop(1,`rgba(255,105,180,${alpha})`);
-      ctx.fillStyle=g;
-      ctx.fillRect(0,0,W,H);
-      ctx.restore();
+      g.addColorStop(0,'transparent');g.addColorStop(1,`rgba(255,105,180,${alpha})`);
+      ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.restore();
     }
   }
 
   function drawWing(flap,hue){
-    ctx.save();
-    ctx.rotate(flap);
-    ctx.fillStyle=`hsla(${hue},80%,80%,0.45)`;
-    ctx.strokeStyle=`hsla(${hue},80%,70%,0.6)`;
-    ctx.lineWidth=1;
-    // Upper wing
-    ctx.beginPath();
-    ctx.moveTo(2,-8);
-    ctx.quadraticCurveTo(25,-30,30,-10);
-    ctx.quadraticCurveTo(28,0,2,-2);
-    ctx.closePath();
-    ctx.fill();ctx.stroke();
-    // Lower wing
-    ctx.beginPath();
-    ctx.moveTo(2,0);
-    ctx.quadraticCurveTo(22,5,20,18);
-    ctx.quadraticCurveTo(15,20,2,6);
-    ctx.closePath();
-    ctx.fill();ctx.stroke();
+    ctx.save();ctx.rotate(flap);
+    ctx.fillStyle=`hsla(${hue},80%,80%,0.45)`;ctx.strokeStyle=`hsla(${hue},80%,70%,0.6)`;ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(2,-8);ctx.quadraticCurveTo(25,-30,30,-10);ctx.quadraticCurveTo(28,0,2,-2);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(2,0);ctx.quadraticCurveTo(22,5,20,18);ctx.quadraticCurveTo(15,20,2,6);ctx.closePath();ctx.fill();ctx.stroke();
     ctx.restore();
   }
 
